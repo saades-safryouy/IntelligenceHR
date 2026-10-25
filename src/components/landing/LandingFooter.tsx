@@ -1,12 +1,12 @@
 import { Mail, MapPin, Phone } from "lucide-react";
-import { BrandMark, scrollToId, useLanding } from "./LandingPrimitives";
+import { scrollToId, useLanding } from "./LandingPrimitives";
 import logo from "../../assets/IAgency_light_logo.png";
 import Dlogo from "../../assets/IAgency_logo.png";
 import type { LandingTheme } from "./landingTranslations";
 
 
 export interface LandingFooterProps {
-  theme: LandingTheme;
+  theme: LandingTheme | undefined;
 }
 
 
