@@ -11,7 +11,8 @@ import {
 import { PageHeader } from '../../components/common/PageHeader'
 import { Breadcrumb } from '../../components/common/Breadcrumb'
 import { StatusBadge } from '../../components/employees/StatusBadge'
-import { employees } from '../../data/mock'
+import { getEmployees } from '../../data/employeeStore'
+import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import type { Employee, EmployeeStatus } from '../../types/models'
 import { employeeRepository } from '../../data/mockRepository'
 import { isApiDataMode } from '../../lib/apiClient'
@@ -118,6 +119,8 @@ function EmployeeDrawer({
 }
 
 export function PeoplePage() {
+  useEmployeeStore()
+  const localEmployees = getEmployees()
   const { language } = useI18n()
   const t = translations[language]
   const [search, setSearch] = useState('')
@@ -165,14 +168,17 @@ export function PeoplePage() {
   }, [queryKey, page, search, status])
 
   const filtered = useMemo(
-    () => isApiDataMode ? apiEmployees : employees.filter(
-        (employee) =>
-          `${employee.firstName} ${employee.lastName} ${employee.jobTitle} ${employee.department}`
-            .toLowerCase()
-            .includes(search.toLowerCase()) &&
-          (status === 'All' || employee.status === status),
-      ),
-    [apiEmployees, search, status],
+    () =>
+      isApiDataMode
+        ? apiEmployees
+        : localEmployees.filter(
+            (employee) =>
+              `${employee.firstName} ${employee.lastName} ${employee.jobTitle} ${employee.department}`
+                .toLowerCase()
+                .includes(search.toLowerCase()) &&
+              (status === 'All' || employee.status === status),
+          ),
+    [apiEmployees, localEmployees, search, status],
   )
 
   return (
@@ -184,7 +190,7 @@ export function PeoplePage() {
       />
 
       <PageHeader
-        eyebrow={isApiDataMode ? `PEOPLE · ${apiTotal} EMPLOYEES` : 'PEOPLE · 248 EMPLOYEES'}
+        eyebrow={isApiDataMode ? `PEOPLE · ${apiTotal} EMPLOYEES` : `PEOPLE · ${localEmployees.length} EMPLOYEES`}
         title={t.directory}
         subtitle="A single source of truth for your workforce."
       >
@@ -331,7 +337,7 @@ export function PeoplePage() {
             <span>
               {isApiDataMode
                 ? `Showing ${apiEmployees.length} of ${apiTotal} employees`
-                : `Showing ${filtered.length} of 248 employees`}
+                : `Showing ${filtered.length} of ${localEmployees.length} employees`}
           </span>
             {isApiDataMode ? (
               <span>

@@ -9,6 +9,7 @@ import {
   deleteOnboardingTask,
   getEmployeeById,
   getEmployees,
+  getHolidays,
   getLeaveRequests,
   getOffboardingTasks,
   getOnboardingRequests,
@@ -18,10 +19,10 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Department, Employee, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
+import type { Department, Employee, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
 import { isApiDataMode } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository } from './apiDomainRepositories'
 import { departments } from './mock'
 
 export type RepositoryOperation = 'list' | 'get' | 'create' | 'update' | 'delete'
@@ -180,6 +181,32 @@ export const departmentRepository = isApiDataMode
         const index = departments.findIndex((d) => d.id === id)
         if (index === -1) return false
         departments.splice(index, 1)
+        return true
+      },
+    })
+
+export const holidayRepository = isApiDataMode
+  ? apiHolidayRepository
+  : createMockRepository<Holiday>({
+      read: getHolidays,
+      get: (id) => getHolidays().find((h) => h.id === id) ?? null,
+      create: (input) => {
+        const h: Holiday = { id: String(Date.now()), ...input }
+        getHolidays().push(h)
+        return h
+      },
+      update: (id, updates) => {
+        const list = getHolidays()
+        const index = list.findIndex((h) => h.id === id)
+        if (index === -1) return null
+        list[index] = { ...list[index], ...updates }
+        return list[index]
+      },
+      delete: (id) => {
+        const list = getHolidays()
+        const index = list.findIndex((h) => h.id === id)
+        if (index === -1) return false
+        list.splice(index, 1)
         return true
       },
     })
