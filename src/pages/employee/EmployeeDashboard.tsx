@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/authHooks'
 import { useI18n } from '../../contexts/I18nContext'
+import { apiData, isApiDataMode } from '../../lib/apiClient'
+import { apiEmployeeRepository, type EmployeeDashboardData } from '../../data/apiEmployeeRepository'
 import {
   ensureDynamicNotifications,
   getHolidays,
@@ -54,20 +56,50 @@ export function EmployeeDashboard() {
   const { language } = useI18n()
   const t = employeeDashboardTranslations[language]
 
-  const employee = resolveEmployee(currentUser)
+  const [apiSummary, setApiSummary] = useState<EmployeeDashboardData | null>(null)
+  const [summaryError, setSummaryError] = useState('')
+  const [summaryReload, setSummaryReload] = useState(0)
 
   useEffect(() => {
-    if (employee) ensureDynamicNotifications(employee)
+    if (!isApiDataMode) return
+    let active = true
+    setSummaryError('')
+    apiEmployeeRepository.getSummary()
+      .then((summary) => {
+        if (active) setApiSummary(summary)
+      })
+      .catch((cause: unknown) => {
+        console.error('Failed to load employee summary:', cause)
+        if (active) setSummaryError(cause instanceof Error ? cause.message : t.loadFailed)
+      })
+    return () => { active = false }
+  }, [summaryReload, t.loadFailed])
+
+  const employee = isApiDataMode ? apiSummary?.employee : resolveEmployee(currentUser)
+
+  useEffect(() => {
+    if (employee && !isApiDataMode) ensureDynamicNotifications(employee)
   }, [employee])
 
-  const myLeave = employee
-    ? getLeaveRequests().filter((request) => request.userId === employee.userId)
-    : []
+  const myLeave = isApiDataMode
+    ? (apiSummary?.leaveRequests ?? [])
+    : (employee ? getLeaveRequests().filter((request) => request.userId === employee.userId) : [])
 
-  if (!currentUser) {
+  if ((!currentUser && !isApiDataMode) || (isApiDataMode && apiSummary === null && !summaryError)) {
     return (
       <div className="page">
         <div className="empty-block">{t.loading}</div>
+      </div>
+    )
+  }
+
+  if (isApiDataMode && summaryError && !apiSummary) {
+    return (
+      <div className="page employee-home">
+        <div className="toast-inline toast-error" role="alert">{summaryError}</div>
+        <button className="button secondary" onClick={() => setSummaryReload((value) => value + 1)}>
+          {t.tryAgain}
+        </button>
       </div>
     )
   }
@@ -80,37 +112,82 @@ export function EmployeeDashboard() {
     )
   }
 
+  const leaveTypes = isApiDataMode ? (apiSummary?.leaveTypes ?? []) : getLeaveTypes()
+  const leaveEntitlements = isApiDataMode ? (apiSummary?.leaveEntitlements ?? []) : getLeaveEntitlements()
+  const allLeaveRequests = isApiDataMode ? (apiSummary?.leaveRequests ?? []) : getLeaveRequests()
+  const holidaysList = isApiDataMode ? (apiSummary?.holidays ?? []) : getHolidays()
+  const onboardingCases = isApiDataMode ? (apiSummary?.onboardingCases ?? []) : getMyOnboarding(employee.userId ?? employee.id)
+  const unreadCountVal = isApiDataMode ? (apiSummary?.unreadCount ?? 0) : getUnreadCount(employee.userId ?? employee.id)
+  const leaveLabel = (type: (typeof leaveTypes)[number] | undefined) => {
+    if (!type) return t.leaveAnnual
+    const key = type.code === 'sick' ? 'leaveSick' : type.code === 'unpaid' ? 'leaveUnpaid' : type.code === 'annual' ? 'leaveAnnual' : type.nameKey
+    return t[key as keyof typeof t] || type.nameKey
+  }
+
   const { percentage: profileCompletion, missing: missingFields } = calculateProfileCompletion(employee)
   const showNudge = shouldShowProfileReminder(employee)
   const balances = calculateLeaveBalances(
-    employee.userId,
-    getLeaveTypes(),
-    getLeaveEntitlements(),
-    getLeaveRequests(),
+    employee.userId ?? employee.id,
+    leaveTypes,
+    leaveEntitlements,
+    allLeaveRequests,
   )
-  const annual = balances.find((b) => b.type.id === 'annual') ?? balances[0]
+  const annual = balances.find((b) => b.type.code === 'annual' || b.type.nameKey === 'leaveAnnual' || b.type.nameKey === 'annual_leave') ?? balances[0]
   const remaining = annual?.remaining ?? 0
   const pendingRequests = myLeave.filter((request) => request.status === 'pending')
   const year = new Date().getFullYear()
-  const upcomingHolidays = holidaysForYear(getHolidays(), year)
+  const upcomingHolidays = holidaysForYear(holidaysList, year)
     .filter((holiday) => holidayAppliesToEmployee(holiday, employee))
     .map((holiday) => ({ ...holiday, inDays: daysUntil(holiday.date) }))
     .filter((holiday) => holiday.inDays >= 0)
     .sort((a, b) => a.inDays - b.inDays)
   const nextHoliday = upcomingHolidays[0]
-  const onboarding = getMyOnboarding(employee.userId)
-  const inbox = getMyNotifications(employee.userId).slice(0, 5)
-  const unread = getUnreadCount(employee.userId)
+  const onboarding = isApiDataMode ? (Array.isArray(onboardingCases) ? onboardingCases[0] ?? null : null) : getMyOnboarding(employee.userId ?? employee.id)
+  const inbox = isApiDataMode ? [] : getMyNotifications(employee.userId).slice(0, 5)
+  const apiInbox = apiSummary?.notifications.slice(0, 5) ?? []
+  const unread = isApiDataMode ? unreadCountVal : getUnreadCount(employee.userId ?? employee.id)
   const week = getWeekDays()
   const today = new Date()
   const passportLevel = passportAlertLevel(employee.passportValidityDate)
 
-  const snooze = (until: string) => {
+  const snooze = async (until: string) => {
+    if (isApiDataMode) {
+      try {
+        const updated = await apiEmployeeRepository.update(employee.id, { personalInfoDismissedUntil: until })
+        if (!updated) throw new Error(t.notFound)
+        setApiSummary((summary) => summary ? { ...summary, employee: updated } : summary)
+      } catch (cause) {
+        console.error('Failed to snooze profile reminder:', cause)
+        setSummaryError(cause instanceof Error ? cause.message : t.saveFailed)
+      }
+      return
+    }
     updateEmployeeProfile(employee.userId, { personalInfoDismissedUntil: until })
+  }
+
+  const dismissNotification = async (id: string) => {
+    if (!isApiDataMode) {
+      markNotificationRead(id)
+      return
+    }
+    try {
+      await apiData(`/api/v1/notifications/${id}/read`, { method: 'PATCH' })
+      setApiSummary((summary) => summary ? {
+        ...summary,
+        notifications: summary.notifications.map((item) =>
+          item.id === id ? { ...item, read_at: item.read_at ?? new Date().toISOString() } : item,
+        ),
+        unreadCount: Math.max(0, summary.unreadCount - (summary.notifications.some((item) => item.id === id && !item.read_at) ? 1 : 0)),
+      } : summary)
+    } catch (cause) {
+      console.error('Failed to mark notification as read:', cause)
+      setSummaryError(cause instanceof Error ? cause.message : t.saveFailed)
+    }
   }
 
   return (
     <div className="page employee-home">
+      {summaryError && <div className="toast-inline toast-error" role="alert">{summaryError}</div>}
       <section className="employee-hero">
         <div className="employee-hero-main">
           <div className="avatar employee-hero-avatar">{employee.initials}</div>
@@ -244,6 +321,7 @@ export function EmployeeDashboard() {
           <QuickAction to="/employee/documents" icon={<FolderOpen size={18} />} label={t.downloadDocs} />
           <QuickAction to="/employee/holidays" icon={<CalendarDays size={18} />} label={t.viewCalendar} />
           <QuickAction to="/employee/onboarding" icon={<ClipboardCheck size={18} />} label={t.navOnboarding} />
+          <QuickAction to="/employee/offboarding" icon={<UserRound size={18} />} label={t.navOffboarding} />
           <QuickAction to="/employee/notifications" icon={<FileText size={18} />} label={t.navNotifications} />
         </div>
       </section>
@@ -265,11 +343,11 @@ export function EmployeeDashboard() {
               const usedPercent = balance.entitlement
                 ? Math.round((balance.used / balance.entitlement) * 100)
                 : 0
-              const tone = balance.type.id === 'sick' ? 'orange' : balance.type.id === 'unpaid' ? 'purple' : 'blue'
+              const tone = balance.type.code === 'sick' ? 'orange' : balance.type.code === 'unpaid' ? 'purple' : 'blue'
               return (
                 <div className="leave-balance-row" key={balance.type.id}>
                   <div>
-                    <strong>{t[balance.type.nameKey as keyof typeof t] || balance.type.nameKey}</strong>
+                    <strong>{leaveLabel(balance.type)}</strong>
                     <span>
                       {balance.remaining} {t.available} · {balance.used} {t.used} · {balance.pending} {t.pending}
                     </span>
@@ -347,7 +425,7 @@ export function EmployeeDashboard() {
                 {myLeave.length ? (
                   myLeave.slice(0, 4).map((request) => (
                     <tr key={request.id}>
-                      <td>{t[request.typeId === 'sick' ? 'leaveSick' : request.typeId === 'unpaid' ? 'leaveUnpaid' : 'leaveAnnual']}</td>
+                      <td>{leaveLabel(leaveTypes.find((type) => type.id === request.typeId))}</td>
                       <td>
                         {formatDate(request.start, language)} – {formatDate(request.end, language)}
                       </td>
@@ -385,17 +463,41 @@ export function EmployeeDashboard() {
             </div>
             <SectionLink to="/employee/notifications">{t.viewAll}</SectionLink>
           </div>
-          {inbox.length ? (
-            inbox.map((item) => (
+          {(isApiDataMode ? apiInbox : inbox).length ? (
+            isApiDataMode ? apiInbox.map((item) => item.resource_type === 'workflow_instance' && item.resource_id ? (
+              <Link
+                className={`notification notification-button ${item.read_at ? 'read' : 'unread'}`}
+                key={item.id}
+                to={`/employee/workflows/${item.resource_id}`}
+                onClick={() => void dismissNotification(item.id)}
+              >
+                <span className="notification-copy">
+                  <strong>{item.title}</strong>
+                  <span>{item.body}</span>
+                  <small>{formatDate(item.created_at, language)}</small>
+                </span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={`notification notification-button ${item.read_at ? 'read' : 'unread'}`}
+                key={item.id}
+                onClick={() => void dismissNotification(item.id)}
+              >
+                <span className="notification-copy">
+                  <strong>{item.title}</strong>
+                  <span>{item.body}</span>
+                  <small>{formatDate(item.created_at, language)}</small>
+                </span>
+              </button>
+            )) : inbox.map((item) => (
               <NotificationItem
                 key={item.id}
                 notification={item}
                 t={t}
                 language={language}
                 dismissLabel={t.dismissNotification}
-                onDismiss={(id) => {
-                  markNotificationRead(id)
-                }}
+                onDismiss={(id) => { dismissNotification(id) }}
               />
             ))
           ) : (
@@ -474,7 +576,7 @@ function ProfileNudge({
   percentage: number
   missing: string[]
   t: (typeof employeeDashboardTranslations)[keyof typeof employeeDashboardTranslations]
-  onSnooze: (until: string) => void
+  onSnooze: (until: string) => void | Promise<void>
 }) {
   const [open, setOpen] = useState(false)
   const defaultDate = (() => {
@@ -503,7 +605,7 @@ function ProfileNudge({
             className="snooze-form"
             onSubmit={(event) => {
               event.preventDefault()
-              onSnooze(until)
+              void onSnooze(until)
               setOpen(false)
             }}
           >
@@ -551,4 +653,3 @@ function QuickAction({
     </Link>
   )
 }
-

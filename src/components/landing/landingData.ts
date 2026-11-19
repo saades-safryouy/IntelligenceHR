@@ -1,7 +1,16 @@
 export type DeptKey = "engineering" | "sales" | "hr" | "finance" | "operations";
-export type TimeRange = "7D" | "30D" | "90D" | "1Y";
+export type TimeRange = "5Y" | "3Y" | "1Y" | "6M";
+export type ContractKey = "fullTime" | "partTime" | "contractor" | "intern";
 
-export const TIME_RANGES: TimeRange[] = ["7D", "30D", "90D", "1Y"];
+export const TIME_RANGES: TimeRange[] = ["5Y", "3Y", "1Y", "6M"];
+
+/** Length of each range in months (used to annualize rates). */
+export const RANGE_MONTHS: Record<TimeRange, number> = {
+  "5Y": 60,
+  "3Y": 36,
+  "1Y": 12,
+  "6M": 6,
+};
 
 /** CSS variables used for each department (keeps colors theme-aware). */
 export const deptColors: Record<DeptKey, string> = {
@@ -21,135 +30,196 @@ export const NAV_SECTIONS = [
   { id: "contact", key: "contact" },
 ] as const;
 
+/** Last 8 months, ending at the current headcount of 100. */
 export const heroGrowth = [
-  { m: "Jan", v: 1040 },
-  { m: "Feb", v: 1068 },
-  { m: "Mar", v: 1092 },
-  { m: "Apr", v: 1110 },
-  { m: "May", v: 1149 },
-  { m: "Jun", v: 1181 },
-  { m: "Jul", v: 1204 },
-  { m: "Aug", v: 1248 },
+  { m: "Apr", v: 91 },
+  { m: "May", v: 93 },
+  { m: "Jun", v: 93 },
+  { m: "Jul", v: 95 },
+  { m: "Aug", v: 96 },
+  { m: "Sep", v: 97 },
+  { m: "Oct", v: 99 },
+  { m: "Nov", v: 100 },
 ];
 
 export const heroDepartments: { key: DeptKey; value: number }[] = [
-  { key: "engineering", value: 412 },
-  { key: "sales", value: 286 },
-  { key: "operations", value: 238 },
-  { key: "finance", value: 164 },
-  { key: "hr", value: 148 },
+  { key: "engineering", value: 33 },
+  { key: "sales", value: 23 },
+  { key: "operations", value: 19 },
+  { key: "finance", value: 13 },
+  { key: "hr", value: 12 },
 ];
 
+/** Today's snapshot: employees by time at the company (years). `mid` is the bucket midpoint. */
+export const tenureBuckets = [
+  { label: "<1", value: 18, mid: 0.5 },
+  { label: "1–2", value: 22, mid: 1.5 },
+  { label: "2–3", value: 20, mid: 2.5 },
+  { label: "3–5", value: 22, mid: 4 },
+  { label: "5+", value: 18, mid: 6 },
+];
+
+/** Today's snapshot: employees by contract type (sums to 100). */
+export const contractMix: { key: ContractKey; value: number }[] = [
+  { key: "fullTime", value: 78 },
+  { key: "partTime", value: 8 },
+  { key: "contractor", value: 9 },
+  { key: "intern", value: 5 },
+];
+
+export interface FunnelData {
+  applicants: number;
+  screened: number;
+  interviewed: number;
+  offers: number;
+  hired: number;
+}
+
+/**
+ * Sample data for a company of 100 employees.
+ * - growth: per step, headcount at the end of the step, hires, exits and the
+ *   engagement score (0-100). headcount = previous headcount + hires - exits.
+ * - departments: headcount per department (6M is today's split; longer
+ *   ranges show the split at the start of the period).
+ * - leave: requests submitted per step.
+ * - status: total = active + onLeave + newHires (newHires = hires of the
+ *   period who are still employed).
+ * - onboarding: sums to status.newHires.
+ * - funnel: recruitment funnel for the period; funnel.hired = total hires.
+ * - timeToHire: average days from application to accepted offer.
+ */
 interface AnalyticsSet {
-  growth: { label: string; headcount: number; hires: number }[];
+  growth: { label: string; headcount: number; hires: number; exits: number; engagement: number }[];
   departments: { key: DeptKey; value: number }[];
   leave: { label: string; annual: number; sick: number; other: number }[];
   status: { total: number; active: number; onLeave: number; newHires: number };
   onboarding: { completed: number; inProgress: number; notStarted: number };
+  funnel: FunnelData;
+  timeToHire: number;
 }
 
 export const analyticsData: Record<TimeRange, AnalyticsSet> = {
-  "7D": {
+  /** Five years, one point per year. */
+  "5Y": {
     growth: [
-      { label: "Mon", headcount: 1236, hires: 2 },
-      { label: "Tue", headcount: 1238, hires: 3 },
-      { label: "Wed", headcount: 1240, hires: 1 },
-      { label: "Thu", headcount: 1241, hires: 4 },
-      { label: "Fri", headcount: 1245, hires: 2 },
-      { label: "Sat", headcount: 1246, hires: 0 },
-      { label: "Sun", headcount: 1248, hires: 1 },
+      { label: "2022", headcount: 42, hires: 14, exits: 4, engagement: 66 },
+      { label: "2023", headcount: 56, hires: 20, exits: 6, engagement: 70 },
+      { label: "2024", headcount: 71, hires: 22, exits: 7, engagement: 74 },
+      { label: "2025", headcount: 86, hires: 21, exits: 6, engagement: 77 },
+      { label: "2026", headcount: 100, hires: 19, exits: 5, engagement: 80 },
     ],
     departments: [
-      { key: "engineering", value: 412 },
-      { key: "sales", value: 286 },
-      { key: "operations", value: 238 },
-      { key: "finance", value: 164 },
-      { key: "hr", value: 148 },
+      { key: "engineering", value: 14 },
+      { key: "sales", value: 10 },
+      { key: "operations", value: 8 },
+      { key: "finance", value: 5 },
+      { key: "hr", value: 5 },
     ],
     leave: [
-      { label: "Mon", annual: 18, sick: 4, other: 2 },
-      { label: "Tue", annual: 15, sick: 6, other: 1 },
-      { label: "Wed", annual: 12, sick: 3, other: 3 },
-      { label: "Thu", annual: 20, sick: 5, other: 2 },
-      { label: "Fri", annual: 26, sick: 4, other: 4 },
+      { label: "2022", annual: 80, sick: 22, other: 9 },
+      { label: "2023", annual: 115, sick: 32, other: 13 },
+      { label: "2024", annual: 150, sick: 42, other: 17 },
+      { label: "2025", annual: 185, sick: 51, other: 21 },
+      { label: "2026", annual: 215, sick: 58, other: 25 },
     ],
-    status: { total: 1248, active: 1176, onLeave: 59, newHires: 13 },
-    onboarding: { completed: 9, inProgress: 3, notStarted: 1 },
+    status: { total: 100, active: 37, onLeave: 5, newHires: 58 },
+    onboarding: { completed: 55, inProgress: 2, notStarted: 1 },
+    funnel: { applicants: 2300, screened: 900, interviewed: 380, offers: 140, hired: 96 },
+    timeToHire: 36,
   },
-  "30D": {
+
+  /** Three years, one point per half-year. */
+  "3Y": {
     growth: [
-      { label: "W1", headcount: 1214, hires: 9 },
-      { label: "W2", headcount: 1222, hires: 11 },
-      { label: "W3", headcount: 1235, hires: 14 },
-      { label: "W4", headcount: 1248, hires: 13 },
+      { label: "H1 24", headcount: 63, hires: 11, exits: 4, engagement: 72 },
+      { label: "H2 24", headcount: 71, hires: 11, exits: 3, engagement: 74 },
+      { label: "H1 25", headcount: 78, hires: 10, exits: 3, engagement: 76 },
+      { label: "H2 25", headcount: 86, hires: 11, exits: 3, engagement: 77 },
+      { label: "H1 26", headcount: 93, hires: 9, exits: 2, engagement: 79 },
+      { label: "H2 26", headcount: 100, hires: 10, exits: 3, engagement: 80 },
     ],
     departments: [
-      { key: "engineering", value: 412 },
-      { key: "sales", value: 286 },
-      { key: "operations", value: 238 },
-      { key: "finance", value: 164 },
-      { key: "hr", value: 148 },
+      { key: "engineering", value: 21 },
+      { key: "sales", value: 15 },
+      { key: "operations", value: 12 },
+      { key: "finance", value: 8 },
+      { key: "hr", value: 7 },
     ],
     leave: [
-      { label: "W1", annual: 64, sick: 18, other: 7 },
-      { label: "W2", annual: 58, sick: 22, other: 9 },
-      { label: "W3", annual: 71, sick: 15, other: 6 },
-      { label: "W4", annual: 82, sick: 19, other: 11 },
+      { label: "2024", annual: 150, sick: 42, other: 17 },
+      { label: "2025", annual: 185, sick: 51, other: 21 },
+      { label: "2026", annual: 215, sick: 58, other: 25 },
     ],
-    status: { total: 1248, active: 1163, onLeave: 47, newHires: 38 },
-    onboarding: { completed: 26, inProgress: 9, notStarted: 3 },
+    status: { total: 100, active: 51, onLeave: 5, newHires: 44 },
+    onboarding: { completed: 41, inProgress: 2, notStarted: 1 },
+    funnel: { applicants: 1400, screened: 560, interviewed: 240, offers: 90, hired: 62 },
+    timeToHire: 34,
   },
-  "90D": {
-    growth: [
-      { label: "Jun", headcount: 1181, hires: 34 },
-      { label: "Jul", headcount: 1204, hires: 31 },
-      { label: "Aug", headcount: 1248, hires: 52 },
-    ],
-    departments: [
-      { key: "engineering", value: 398 },
-      { key: "sales", value: 279 },
-      { key: "operations", value: 231 },
-      { key: "finance", value: 160 },
-      { key: "hr", value: 145 },
-    ],
-    leave: [
-      { label: "Jun", annual: 210, sick: 62, other: 28 },
-      { label: "Jul", annual: 318, sick: 48, other: 31 },
-      { label: "Aug", annual: 356, sick: 51, other: 25 },
-    ],
-    status: { total: 1248, active: 1131, onLeave: 64, newHires: 117 },
-    onboarding: { completed: 94, inProgress: 17, notStarted: 6 },
-  },
+
+  /** One year, headcount by month, leave by quarter. */
   "1Y": {
     growth: [
-      { label: "Sep", headcount: 968, hires: 22 },
-      { label: "Oct", headcount: 985, hires: 25 },
-      { label: "Nov", headcount: 1002, hires: 24 },
-      { label: "Dec", headcount: 1011, hires: 14 },
-      { label: "Jan", headcount: 1040, hires: 38 },
-      { label: "Feb", headcount: 1068, hires: 33 },
-      { label: "Mar", headcount: 1092, hires: 30 },
-      { label: "Apr", headcount: 1110, hires: 26 },
-      { label: "May", headcount: 1149, hires: 44 },
-      { label: "Jun", headcount: 1181, hires: 34 },
-      { label: "Jul", headcount: 1204, hires: 31 },
-      { label: "Aug", headcount: 1248, hires: 52 },
+      { label: "Dec", headcount: 86, hires: 1, exits: 0, engagement: 77 },
+      { label: "Jan", headcount: 87, hires: 2, exits: 1, engagement: 77 },
+      { label: "Feb", headcount: 89, hires: 2, exits: 0, engagement: 78 },
+      { label: "Mar", headcount: 90, hires: 1, exits: 0, engagement: 78 },
+      { label: "Apr", headcount: 91, hires: 1, exits: 0, engagement: 78 },
+      { label: "May", headcount: 93, hires: 2, exits: 0, engagement: 79 },
+      { label: "Jun", headcount: 93, hires: 1, exits: 1, engagement: 79 },
+      { label: "Jul", headcount: 95, hires: 2, exits: 0, engagement: 79 },
+      { label: "Aug", headcount: 96, hires: 2, exits: 1, engagement: 79 },
+      { label: "Sep", headcount: 97, hires: 2, exits: 1, engagement: 80 },
+      { label: "Oct", headcount: 99, hires: 2, exits: 0, engagement: 80 },
+      { label: "Nov", headcount: 100, hires: 2, exits: 1, engagement: 80 },
     ],
     departments: [
-      { key: "engineering", value: 356 },
-      { key: "sales", value: 251 },
-      { key: "operations", value: 214 },
-      { key: "finance", value: 151 },
-      { key: "hr", value: 136 },
+      { key: "engineering", value: 28 },
+      { key: "sales", value: 20 },
+      { key: "operations", value: 17 },
+      { key: "finance", value: 11 },
+      { key: "hr", value: 10 },
     ],
     leave: [
-      { label: "Q4", annual: 640, sick: 190, other: 74 },
-      { label: "Q1", annual: 520, sick: 210, other: 66 },
-      { label: "Q2", annual: 610, sick: 150, other: 81 },
-      { label: "Q3", annual: 884, sick: 161, other: 84 },
+      { label: "Q4", annual: 48, sick: 15, other: 6 },
+      { label: "Q1", annual: 42, sick: 17, other: 5 },
+      { label: "Q2", annual: 50, sick: 12, other: 7 },
+      { label: "Q3", annual: 70, sick: 14, other: 7 },
     ],
-    status: { total: 1248, active: 1102, onLeave: 51, newHires: 373 },
-    onboarding: { completed: 341, inProgress: 24, notStarted: 8 },
+    status: { total: 100, active: 77, onLeave: 5, newHires: 18 },
+    onboarding: { completed: 15, inProgress: 2, notStarted: 1 },
+    funnel: { applicants: 480, screened: 190, interviewed: 80, offers: 30, hired: 20 },
+    timeToHire: 31,
+  },
+
+  /** Semester (six months), by month. */
+  "6M": {
+    growth: [
+      { label: "Jun", headcount: 93, hires: 1, exits: 1, engagement: 79 },
+      { label: "Jul", headcount: 95, hires: 2, exits: 0, engagement: 79 },
+      { label: "Aug", headcount: 96, hires: 2, exits: 1, engagement: 79 },
+      { label: "Sep", headcount: 97, hires: 2, exits: 1, engagement: 80 },
+      { label: "Oct", headcount: 99, hires: 2, exits: 0, engagement: 80 },
+      { label: "Nov", headcount: 100, hires: 2, exits: 1, engagement: 80 },
+    ],
+    departments: [
+      { key: "engineering", value: 33 },
+      { key: "sales", value: 23 },
+      { key: "operations", value: 19 },
+      { key: "finance", value: 13 },
+      { key: "hr", value: 12 },
+    ],
+    leave: [
+      { label: "Jun", annual: 16, sick: 5, other: 2 },
+      { label: "Jul", annual: 26, sick: 4, other: 3 },
+      { label: "Aug", annual: 30, sick: 4, other: 2 },
+      { label: "Sep", annual: 14, sick: 6, other: 2 },
+      { label: "Oct", annual: 12, sick: 7, other: 3 },
+      { label: "Nov", annual: 11, sick: 6, other: 2 },
+    ],
+    status: { total: 100, active: 84, onLeave: 5, newHires: 11 },
+    onboarding: { completed: 8, inProgress: 2, notStarted: 1 },
+    funnel: { applicants: 240, screened: 96, interviewed: 42, offers: 16, hired: 11 },
+    timeToHire: 28,
   },
 };
 

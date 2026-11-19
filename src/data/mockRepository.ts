@@ -19,10 +19,10 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Department, Employee, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
-import { isApiDataMode } from '../lib/apiClient'
+import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
+import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository } from './apiDomainRepositories'
 import { departments } from './mock'
 
 export type RepositoryOperation = 'list' | 'get' | 'create' | 'update' | 'delete'
@@ -35,6 +35,7 @@ export interface RepositoryQuery<T> {
   where?: Partial<Record<keyof T, unknown>>
   sortBy?: keyof T
   sortDirection?: 'asc' | 'desc'
+  columnFilters?: Record<string, string | { from?: string; to?: string } | { operator: 'eq' | 'gt' | 'gte' | 'lt' | 'lte'; value: number }>
 }
 
 export interface RepositoryPage<T> {
@@ -44,7 +45,7 @@ export interface RepositoryPage<T> {
   total: number
 }
 
-export interface MockRepository<T extends { id: string | number }> {
+ export interface MockRepository<T extends { id: string | number }> {
   list(query?: RepositoryQuery<T>): Promise<RepositoryPage<T>>
   get(id: T['id']): Promise<T | null>
   create(input: Omit<T, 'id'>): Promise<T>
@@ -211,22 +212,73 @@ export const holidayRepository = isApiDataMode
       },
     })
 
-export const onboardingRepository = createMockRepository<OnboardingRequest>({
-  read: getOnboardingRequests,
-  get: (id) => getOnboardingRequests().find((request) => request.id === id) ?? null,
-  create: createOnboardingTask,
-  update: updateOnboardingTask,
-  delete: deleteOnboardingTask,
-})
+export const onboardingRepository = isApiDataMode
+  ? apiOnboardingRepository
+  : createMockRepository<OnboardingRequest>({
+      read: getOnboardingRequests,
+      get: (id) => getOnboardingRequests().find((request) => request.id === id) ?? null,
+      create: createOnboardingTask,
+      update: updateOnboardingTask,
+      delete: deleteOnboardingTask,
+    })
 
-export const offboardingRepository = createMockRepository<OffboardingRequest>({
-  read: getOffboardingTasks,
-  get: (id) => getOffboardingTasks().find((request) => request.id === id) ?? null,
-  create: createOffboardingTask,
-  update: updateOffboardingTask,
-  delete: deleteOffboardingTask,
-})
+export const offboardingRepository = isApiDataMode
+  ? apiOffboardingRepository
+  : createMockRepository<OffboardingRequest>({
+      read: getOffboardingTasks,
+      get: (id) => getOffboardingTasks().find((request) => request.id === id) ?? null,
+      create: createOffboardingTask,
+      update: updateOffboardingTask,
+      delete: deleteOffboardingTask,
+    })
+
+export const documentRepository = isApiDataMode
+  ? apiDocumentRepository
+  : createMockRepository<EmployeeDocumentRecord>({
+      read: () => [],
+      get: () => null,
+      create: (input) => ({ id: String(Date.now()), ...input }),
+      update: (_id, _updates) => null,
+      delete: () => true,
+    })
+
 
 export function resetDemoRepositoryData(confirmed: boolean): Promise<void> {
   return Promise.resolve().then(() => resetStoredDemoData(confirmed))
 }
+
+export const dashboardRepository = isApiDataMode
+  ? {
+      async getStatistics() {
+        const response = await apiRequest('/api/v1/dashboard/statistics')
+        return response
+      },
+    }
+  : {
+      async getStatistics() {
+        const employees = getEmployees()
+        const onboardingRequests = getOnboardingRequests()
+        const offboardingRequests = getOffboardingTasks()
+        const leaveRequests = getLeaveRequests()
+        const holidays = getHolidays()
+        return {
+          metrics: {
+            totalEmployees: employees.length,
+            activeEmployees: employees.filter((e) => e.status === 'Active').length,
+            onLeaveCount: employees.filter((e) => e.status === 'On Leave').length,
+            activeOnboarding: onboardingRequests.filter(
+              (req) => req.status !== 'Completed' && req.stage !== 'Completed'
+            ).length,
+            onboardingAtRisk: onboardingRequests.filter((req) => req.status === 'At risk').length,
+            activeOffboarding: offboardingRequests.filter((request) => request.status !== 'Completed').length,
+            offboardingOverdue: offboardingRequests.filter((request) => request.status === 'Overdue').length,
+            leavePending: leaveRequests.filter((req) => req.status === 'pending').length,
+          },
+          employees,
+          onboardingRequests,
+          offboardingRequests,
+          leaveRequests,
+          holidays,
+        }
+      },
+    }

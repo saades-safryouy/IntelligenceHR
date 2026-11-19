@@ -8,6 +8,7 @@ export type AuthContextType = {
   isLoading: boolean
   initializationError: string | null
   role: Role | null
+  hasPermission: (permission: string) => boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   hasRole: (role: Role) => boolean

@@ -1,0 +1,84 @@
+.employee-workflows {
+  min-width: 0;
+}
+
+.employee-workflow-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.employee-workflow-count {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  margin-inline-start: 7px;
+  place-items: center;
+  border-radius: 99px;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, var(--surface));
+  font-size: 9px;
+}
+
+.employee-workflow-row {
+  grid-template-columns: 42px minmax(150px, 1fr) minmax(170px, .9fr) auto auto 18px;
+}
+
+.employee-workflow-progress {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.employee-workflow-action {
+  color: var(--orange);
+  font-size: 9px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.employee-workflow-empty {
+  min-height: 220px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+@media (max-width: 900px) {
+  .employee-workflow-row {
+    grid-template-columns: 38px minmax(120px, 1fr) auto 18px;
+  }
+
+  .employee-workflow-progress {
+    grid-column: 2 / -2;
+  }
+
+  .employee-workflow-action {
+    grid-column: 2 / -2;
+  }
+}
+
+@media (max-width: 640px) {
+  .employee-workflow-header-actions {
+    width: 100%;
+  }
+
+  .employee-workflow-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+  }
+
+  .employee-workflow-progress,
+  .employee-workflow-action {
+    grid-column: 2 / -1;
+  }
+
+  .employee-workflow-row .workflow-pill {
+    grid-column: 2 / -1;
+    grid-row: auto;
+  }
+
+  .employee-workflow-row .workflow-row-arrow {
+    display: none;
+  }
+}

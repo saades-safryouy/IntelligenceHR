@@ -36,8 +36,9 @@ export function LoginPage({
     if (isAuthenticated && role) {
       if (role === 'Employee') {
         navigate('/employee/dashboard', { replace: true })
+      } else if (role === 'Manager' || role === 'Department Head') {
+        navigate('/manager/dashboard', { replace: true })
       } else {
-        // HR roles (HR Administrator, HR, Manager, etc.)
         navigate('/app/dashboard', { replace: true })
       }
     }
@@ -166,14 +167,45 @@ export function LoginPage({
 
           <small className="security-message">🔒 Your credentials are encrypted and secure.</small>
 
-          <div className="demo-credentials">
-            <small>
-              <strong>Demo Credentials:</strong>
-              <br />
-              HR: saad.hr@intillj.com / password
-              <br />
-              Employee: ahmed.benali@intillj.com / password
+          <div className="demo-credentials" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+            <small style={{ display: 'block', marginBottom: '8px', color: 'var(--muted)', fontWeight: 600 }}>
+              Demo Logins (Password: <code>TestPassword2026!</code>):
             </small>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="button secondary"
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+                onClick={() => {
+                  setEmail('demo.hr.admin@intelligence-rh.example.test')
+                  setPassword('TestPassword2026!')
+                }}
+              >
+                HR Admin
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+                onClick={() => {
+                  setEmail('demo.manager.01@intelligence-rh.example.test')
+                  setPassword('TestPassword2026!')
+                }}
+              >
+                Manager
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+                onClick={() => {
+                  setEmail('demo.employee.01@intelligence-rh.example.test')
+                  setPassword('TestPassword2026!')
+                }}
+              >
+                Employee
+              </button>
+            </div>
           </div>
         </div>
       </div>

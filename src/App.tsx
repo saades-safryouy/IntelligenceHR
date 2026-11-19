@@ -12,6 +12,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { RoleRoute } from './components/auth/RoleRoute'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { PeoplePage } from './pages/people/PeoplePage'
+import { EmployeeShowcasePage } from './pages/people/EmployeeShowcasePage'
 import { OnboardingPage } from './pages/onboarding/OnboardingPage'
 import { OffboardingPage } from './pages/offboarding/OffboardingPage'
 import { LeavePage } from './pages/leave/LeavePage'
@@ -26,17 +27,32 @@ import { PerformancePage } from './pages/performance/PerformancePage'
 import { TrainingPage } from './pages/training/TrainingPage'
 import { AskIntelligencePage } from './pages/intelligence/AskIntelligencePage'
 import { AutomationsPage } from './pages/automations/AutomationsPage'
-import { ReportsCenterPage } from './pages/reports/ReportsCenterPage'
-import { AdvancedSettingsPage } from './pages/settings/AdvancedSettingsPage'
 import { PayrollPage } from './pages/payroll/PayrollPage'
-
 import { EmployeeDashboard } from './pages/employee/EmployeeDashboard'
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage'
 import { EmployeeLeavePage } from './pages/employee/EmployeeLeavePage'
 import { EmployeeHolidaysPage } from './pages/employee/EmployeeHolidaysPage'
 import { EmployeeDocumentsPage } from './pages/employee/EmployeeDocumentsPage'
 import { EmployeeOnboardingPage } from './pages/employee/EmployeeOnboardingPage'
+import { EmployeeOffboardingPage } from './pages/employee/EmployeeOffboardingPage'
 import { EmployeeNotificationsPage } from './pages/employee/EmployeeNotificationsPage'
+import { EmployeeOrganigramPage } from './pages/employee/EmployeeOrganigramPage'
+import { EmployeeWorkflowsPage } from './pages/employee/EmployeeWorkflowsPage'
+import { ManagerLayout } from './components/layout/ManagerLayout'
+import { ManagerDashboardPage } from './pages/manager/ManagerDashboardPage'
+import { ManagerTeamPage } from './pages/manager/ManagerTeamPage'
+import { ManagerApprovalCenterPage } from './pages/manager/ManagerApprovalCenterPage'
+import { ManagerRequestPage } from './pages/manager/ManagerRequestPage'
+import { ManagerLeavePage } from './pages/manager/ManagerLeavePage'
+import { ManagerHolidaysPage } from './pages/manager/ManagerHolidaysPage'
+import { ManagerOnboardingPage } from './pages/manager/ManagerOnboardingPage'
+import { ManagerOffboardingPage } from './pages/manager/ManagerOffboardingPage'
+import { ManagerWorkflowsPage } from './pages/manager/ManagerWorkflowsPage'
+import { ManagerNotificationsPage } from './pages/manager/ManagerNotificationsPage'
+import { AnalyticsPage } from './pages/analytics/AnalyticsPage'
+import { WorkflowPage } from './pages/workflow/WorkflowPage'
+import { WorkflowDetailPage } from './pages/workflow/WorkflowDetailPage'
+import { OrganigrammePage } from './pages/people/OrganigrammePage'
 import './App.css'
 import './styles.css'
 
@@ -84,10 +100,15 @@ function AppContent() {
             }>
               <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="employees" element={<PeoplePage />} />
+              <Route path="employees/:employeeId" element={<EmployeeShowcasePage />} />
+              <Route path="organigramme" element={<OrganigrammePage />} />
               <Route path="onboarding/requests" element={<OnboardingPage />} />
               <Route path="offboarding/requests" element={<OffboardingPage />} />
               <Route path="leave/requests" element={<LeavePage />} />
+              <Route path="workflows" element={<WorkflowPage />} />
+              <Route path="workflows/:instanceId" element={<WorkflowDetailPage />} />
               <Route path="holidays" element={<HolidaysPage />} />
               <Route path="documents" element={<DocumentsPage />} />
               <Route path="calendar" element={<CalendarPage />} />
@@ -100,8 +121,6 @@ function AppContent() {
               <Route path="payroll" element={<PayrollPage />} />
               <Route path="intelligence/ask" element={<AskIntelligencePage />} />
               <Route path="automations" element={<AutomationsPage />} />
-              <Route path="reports/center" element={<ReportsCenterPage />} />
-              <Route path="settings/advanced" element={<AdvancedSettingsPage />} />
             </Route>
 
             {/* Employee Routes */}
@@ -119,7 +138,35 @@ function AppContent() {
               <Route path="holidays" element={<EmployeeHolidaysPage />} />
               <Route path="documents" element={<EmployeeDocumentsPage />} />
               <Route path="onboarding" element={<EmployeeOnboardingPage />} />
+              <Route path="offboarding" element={<EmployeeOffboardingPage />} />
               <Route path="notifications" element={<EmployeeNotificationsPage />} />
+              <Route path="organigram" element={<EmployeeOrganigramPage />} />
+              <Route path="workflows" element={<EmployeeWorkflowsPage />} />
+              <Route path="workflows/:instanceId" element={<WorkflowDetailPage />} />
+            </Route>
+
+            {/* Manager Routes */}
+            <Route path="/manager" element={
+              <ProtectedRoute>
+                <RoleRoute roles={['Manager', 'Department Head']}>
+                  <ManagerLayout language={language} theme={theme} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onLogout={logout} />
+                </RoleRoute>
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/manager/dashboard" replace />} />
+              <Route path="dashboard" element={<ManagerDashboardPage />} />
+              <Route path="analytics" element={<AnalyticsPage mode="manager" />} />
+              <Route path="team" element={<ManagerTeamPage />} />
+              <Route path="team/:employeeId" element={<EmployeeShowcasePage />} />
+              <Route path="leave" element={<ManagerLeavePage />} />
+              <Route path="holidays" element={<ManagerHolidaysPage />} />
+              <Route path="onboarding" element={<ManagerOnboardingPage />} />
+              <Route path="offboarding" element={<ManagerOffboardingPage />} />
+              <Route path="approvals" element={<ManagerApprovalCenterPage />} />
+              <Route path="workflows" element={<ManagerWorkflowsPage />} />
+              <Route path="workflows/:instanceId" element={<WorkflowDetailPage />} />
+              <Route path="notifications" element={<ManagerNotificationsPage />} />
+              <Route path="requests/:resourceType/:resourceId" element={<ManagerRequestPage />} />
             </Route>
 
             <Route path="*" element={<PublicLanding language={language} onLanguageChange={changeLanguage} onThemeChange={changeTheme} theme={theme} />} />
@@ -161,4 +208,3 @@ function PublicLanding({
     />
   )
 }
-

@@ -1,0 +1,315 @@
+.employee-organigram {
+  display: grid;
+  gap: 18px;
+}
+
+.employee-org-search {
+  display: flex;
+  width: min(100%, 350px);
+  min-height: 42px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.employee-org-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+}
+
+.employee-org-search input::placeholder {
+  color: var(--muted);
+}
+
+.employee-org-panel {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 9%);
+}
+
+.employee-org-panel-heading {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.employee-org-count {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.employee-org-count svg {
+  color: var(--blue);
+}
+
+.employee-org-count strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.employee-org-scope,
+.employee-org-external-manager > span {
+  max-width: 420px;
+  color: var(--muted-2);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: end;
+}
+
+.employee-org-hierarchy {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  min-height: 350px;
+  padding: 34px 20px 42px;
+  background-color: var(--surface);
+  background-image: radial-gradient(var(--line) 0.8px, transparent 0.8px);
+  background-size: 20px 20px;
+}
+
+.employee-org-person {
+  position: relative;
+  display: grid;
+  width: min(100%, 330px);
+  min-height: 96px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--text);
+  background: var(--surface-raised);
+  box-shadow: 0 5px 16px rgb(0 0 0 / 8%);
+  text-align: start;
+}
+
+.employee-org-person.current {
+  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+.employee-org-avatar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+  border-radius: 50%;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 13%, var(--surface));
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.employee-org-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.employee-org-copy strong,
+.employee-org-copy span,
+.employee-org-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.employee-org-copy strong {
+  font-size: 12px;
+}
+
+.employee-org-copy span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.employee-org-copy small {
+  color: var(--muted-2);
+  font-size: 10px;
+}
+
+.employee-org-status,
+.employee-org-manager-label {
+  grid-column: 2;
+  color: var(--mint);
+  font-size: 9px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.employee-org-person.manager .employee-org-manager-label {
+  color: var(--muted);
+}
+
+.employee-org-external-manager {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.employee-org-no-manager {
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.employee-org-connector {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+  border-radius: 50%;
+  color: var(--blue);
+  background: var(--surface);
+}
+
+.employee-org-focus {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.employee-org-reports {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.employee-org-child,
+.employee-org-result {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  color: inherit;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+
+.employee-org-child:hover .employee-org-person,
+.employee-org-result:hover .employee-org-person {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--blue) 60%, var(--line));
+}
+
+.employee-org-person.compact {
+  width: min(100%, 300px);
+}
+
+.employee-org-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.employee-org-breadcrumb button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  background: var(--surface);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.employee-org-breadcrumb button:hover {
+  color: var(--text);
+  border-color: var(--blue);
+}
+
+.employee-org-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+
+.employee-org-state {
+  display: grid;
+  min-height: 270px;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.employee-org-state svg {
+  color: var(--blue);
+}
+
+.employee-org-state strong {
+  color: var(--text);
+}
+
+.employee-org-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 11px;
+}
+
+.employee-org-alert.error {
+  color: var(--red);
+}
+
+@media (max-width: 640px) {
+  .employee-org-panel-heading,
+  .employee-org-alert {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .employee-org-scope,
+  .employee-org-external-manager > span {
+    text-align: start;
+  }
+
+  .employee-org-search {
+    width: 100%;
+  }
+
+  .employee-org-hierarchy {
+    padding: 24px 12px 30px;
+  }
+
+  .employee-org-reports {
+    width: 100%;
+  }
+}

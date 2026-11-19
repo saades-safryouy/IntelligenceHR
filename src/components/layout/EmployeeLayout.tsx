@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -16,6 +16,8 @@ import {
   Search,
   Sun,
   User,
+  Workflow,
+  Network,
   X,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/authHooks'
@@ -26,6 +28,11 @@ import { EmployeeNotificationPanel } from '../notifications/EmployeeNotification
 import { employeeDashboardTranslations } from '../../pages/employee/translations'
 import { getUnreadCount, resolveEmployee } from '../../data/employeeStore'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
+import { apiRequest, isApiDataMode } from '../../lib/apiClient'
+
+interface ApiUnreadNotifications {
+  total: number
+}
 
 export function EmployeeLayout({
   language,
@@ -44,11 +51,21 @@ export function EmployeeLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [apiUnread, setApiUnread] = useState<number | null>(null)
   const { currentUser } = useAuth()
   const navigate = useNavigate()
   const t = employeeDashboardTranslations[language]
   const employee = resolveEmployee(currentUser)
-  const unread = employee ? getUnreadCount(employee.userId) : 0
+  const unread = isApiDataMode ? apiUnread ?? 0 : employee ? getUnreadCount(employee.userId) : 0
+
+  useEffect(() => {
+    if (!isApiDataMode) return
+    let active = true
+    apiRequest<ApiUnreadNotifications>('/api/v1/notifications?unread=1&pageSize=1')
+      .then((response) => { if (active) setApiUnread(response.total) })
+      .catch((cause: unknown) => { console.error('Failed to load unread notifications:', cause) })
+    return () => { active = false }
+  }, [])
 
   const navItems = [
     { label: t.navDashboard, path: '/employee/dashboard', icon: LayoutDashboard },
@@ -56,7 +73,10 @@ export function EmployeeLayout({
     { label: t.navLeave, path: '/employee/leave', icon: CalendarDays },
     { label: t.navHolidays, path: '/employee/holidays', icon: CalendarDays },
     { label: t.navOnboarding, path: '/employee/onboarding', icon: ClipboardCheck },
+    { label: t.navOffboarding, path: '/employee/offboarding', icon: User },
     { label: t.navNotifications, path: '/employee/notifications', icon: Bell },
+    { label: t.navOrganigram, path: '/employee/organigram', icon: Network },
+    { label: t.navWorkflows, path: '/employee/workflows', icon: Workflow },
     { label: t.navDocuments, path: '/employee/documents', icon: FolderOpen },
   ]
 
@@ -170,7 +190,7 @@ export function EmployeeLayout({
                 <Bell size={19} />
                 {unread > 0 && <i>{unread}</i>}
               </button>
-              {showNotifications && <EmployeeNotificationPanel />}
+              {showNotifications && <EmployeeNotificationPanel onUnreadChange={setApiUnread} />}
             </div>
 
             <div className="top-user">

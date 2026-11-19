@@ -1,0 +1,217 @@
+/* ==========================================================================
+   Settings page additions
+   Works alongside your existing .settings-layout, .settings-menu,
+   .settings-content and .settings-fields rules. New classes use the
+   "setting-" prefix so they don't collide with those.
+   ========================================================================== */
+
+/* Rows of toggles ------------------------------------------------------- */
+.setting-group {
+    display: grid;
+    margin-block-start: 8px;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 16px;
+    border-block-end: 1px solid var(--line);
+}
+
+.setting-row:first-child {
+    padding-block-start: 8px;
+}
+
+.setting-row:last-child {
+    border-block-end: 0;
+}
+
+.setting-row-text {
+    display: grid;
+    gap: 4px;
+    min-inline-size: 0;
+}
+
+.setting-row-text label {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.setting-row-text p {
+    max-inline-size: 62ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Switch (a styled checkbox with role="switch") ------------------------- */
+.setting-switch {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex-shrink: 0;
+    inline-size: 40px;
+    block-size: 24px;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background-color: var(--surface-raised);
+    cursor: pointer;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.setting-switch::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-start: 2px;
+    inline-size: 18px;
+    block-size: 18px;
+    border-radius: 50%;
+    background-color: var(--muted);
+    transition:
+        transform 160ms ease,
+        background-color 160ms ease;
+}
+
+.setting-switch:hover:not(:disabled) {
+    border-color: var(--blue);
+}
+
+.setting-switch:checked {
+    border-color: var(--blue);
+    background-color: var(--blue);
+}
+
+.setting-switch:checked::after {
+    background-color: #fff;
+    transform: translateX(16px);
+}
+
+[dir="rtl"] .setting-switch:checked::after {
+    transform: translateX(-16px);
+}
+
+.setting-switch:focus-visible {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue);
+}
+
+.setting-switch:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Single select field --------------------------------------------------- */
+.setting-field {
+    display: grid;
+    gap: 8px;
+    padding-block: 16px;
+    border-block-start: 1px solid var(--line);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.setting-field select {
+    max-inline-size: 440px;
+    font-weight: 400;
+}
+
+.setting-hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Save bar -------------------------------------------------------------- */
+.setting-savebar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-block-start: 20px;
+}
+
+.setting-saved {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--green, #12b76a);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Sections without content yet ------------------------------------------ */
+.setting-empty {
+    display: grid;
+    gap: 4px;
+    margin-block-start: 20px;
+    padding: 32px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.setting-empty strong {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.setting-empty span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* Tints where color-mix is available ------------------------------------ */
+@supports (color: color-mix(in srgb, red, blue)) {
+    .setting-switch:focus-visible {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent);
+    }
+}
+
+@media (pointer: coarse) {
+    .setting-switch {
+        inline-size: 48px;
+        block-size: 28px;
+    }
+
+    .setting-switch::after {
+        inline-size: 22px;
+        block-size: 22px;
+    }
+
+    .setting-switch:checked::after {
+        transform: translateX(20px);
+    }
+
+    [dir="rtl"] .setting-switch:checked::after {
+        transform: translateX(-20px);
+    }
+}
+
+@media (max-width: 560px) {
+    .setting-row {
+        align-items: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .setting-switch,
+    .setting-switch::after {
+        transition: none;
+    }
+}

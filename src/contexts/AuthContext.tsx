@@ -58,6 +58,7 @@ function toApiSessionUser(principal: ApiPrincipal): AuthenticatedUser {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [permissions, setPermissions] = useState<string[]>([])
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(() => {
     if (isApiDataMode) return null
     const storedUser = sessionStorage.getItem('Intillegence-user')
@@ -94,13 +95,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isApiDataMode) return
 
     let active = true
-    apiData<ApiPrincipal>('/api/v1/auth/me')
-      .then((principal) => {
+    Promise.all([
+      apiData<ApiPrincipal>('/api/v1/auth/me'),
+      apiData<string[]>('/api/v1/me/permissions'),
+    ])
+      .then(([principal, grantedPermissions]) => {
         if (!active) return
         const sessionUser = toApiSessionUser(principal)
         setCurrentUser(sessionUser)
         setIsAuthenticated(true)
         setRole(sessionUser.role)
+        setPermissions(grantedPermissions)
       })
       .catch((error: unknown) => {
         if (!active || (error instanceof ApiError && error.status === 401)) return
@@ -122,10 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       })
+      const grantedPermissions = await apiData<string[]>('/api/v1/me/permissions')
       const sessionUser = toApiSessionUser(principal)
       setCurrentUser(sessionUser)
       setIsAuthenticated(true)
       setRole(sessionUser.role)
+      setPermissions(grantedPermissions)
       return
     }
 
@@ -153,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentUser(sessionUser)
       setIsAuthenticated(true)
       setRole(sessionUser.role)
+      setPermissions([])
       sessionStorage.setItem('Intillegence-user', JSON.stringify(sessionUser))
       sessionStorage.setItem('Intillegence-authenticated', 'true')
     } else {
@@ -172,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
     setIsAuthenticated(false)
     setRole(null)
+    setPermissions([])
     sessionStorage.removeItem('Intillegence-user')
     sessionStorage.removeItem('Intillegence-authenticated')
     window.location.href = '/'
@@ -194,6 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         initializationError,
         role,
+        hasPermission: (permission: string) => permissions.includes(permission),
         login,
         logout,
         hasRole,

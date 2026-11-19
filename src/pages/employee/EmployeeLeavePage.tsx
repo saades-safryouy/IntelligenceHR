@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/authHooks'
 import { useI18n } from '../../contexts/I18nContext'
 import { PageHeader } from '../../components/common/PageHeader'
@@ -12,6 +13,8 @@ import {
   resolveEmployee,
   submitLeaveRequest,
 } from '../../data/employeeStore'
+import { apiEmployeeRepository, type EmployeeDashboardData } from '../../data/apiEmployeeRepository'
+import { apiData, isApiDataMode } from '../../lib/apiClient'
 import type { HalfDay, LeaveRequest } from '../../types/models'
 import { employeeFullName, formatDate } from '../../utils/employeeHelpers'
 import { calculateLeaveBalances, hasLeaveOverlap, workingLeaveDays } from '../../utils/leave'
@@ -23,20 +26,52 @@ export function EmployeeLeavePage() {
   useEmployeeStore()
   const { currentUser } = useAuth()
   const { language } = useI18n()
+  const location = useLocation()
   const t = employeeDashboardTranslations[language]
-  const employee = resolveEmployee(currentUser)
+  const [apiSummary, setApiSummary] = useState<EmployeeDashboardData | null>(null)
+  const [loading, setLoading] = useState(isApiDataMode)
+  const [busy, setBusy] = useState(false)
+  const [reload, setReload] = useState(0)
   const [open, setOpen] = useState(false)
   const [detail, setDetail] = useState<LeaveRequest | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const types = getLeaveTypes()
-  const colleagues = getEmployees().filter((person) => person.userId !== employee?.userId)
-  const requests = employee
-    ? getLeaveRequests().filter((request) => request.userId === employee.userId)
-    : []
+  const employee = isApiDataMode ? apiSummary?.employee : resolveEmployee(currentUser)
+  const types = isApiDataMode ? apiSummary?.leaveTypes ?? [] : getLeaveTypes()
+  const colleagues = isApiDataMode ? [] : getEmployees().filter((person) => person.userId !== employee?.userId)
+  const requests = useMemo(() => isApiDataMode
+    ? apiSummary?.leaveRequests ?? []
+    : employee ? getLeaveRequests().filter((request) => request.userId === employee.userId) : [], [apiSummary, employee])
 
-  if (!employee) {
+  useEffect(() => {
+    if (!isApiDataMode) return
+    let active = true
+    setLoading(true)
+    setError('')
+    apiEmployeeRepository.getSummary()
+      .then((summary) => { if (active) setApiSummary(summary) })
+      .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : t.loadFailed) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [reload, t.loadFailed])
+
+  useEffect(() => {
+    const requestId = location.hash.startsWith('#request-')
+      ? decodeURIComponent(location.hash.slice('#request-'.length))
+      : ''
+    const selected = requests.find((request) => request.id === requestId)
+    if (selected) {
+      setDetail(selected)
+      document.getElementById(`request-${requestId}`)?.scrollIntoView({ block: 'center' })
+    }
+  }, [location.hash, requests])
+
+  if (loading) {
+    return <div className="page employee-page"><div className="empty-block" role="status">{t.loading}</div></div>
+  }
+
+  if (!employee && !error) {
     return (
       <div className="page">
         <div className="empty-block">{t.notFound}</div>
@@ -44,9 +79,25 @@ export function EmployeeLeavePage() {
     )
   }
 
-  const balances = calculateLeaveBalances(employee.userId, types, getLeaveEntitlements(), getLeaveRequests())
+  if (!employee) {
+    return (
+      <div className="page employee-page">
+        <div className="toast-inline toast-error" role="alert">{error}</div>
+        <button className="button secondary" onClick={() => setReload((value) => value + 1)}>{t.tryAgain}</button>
+      </div>
+    )
+  }
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const entitlements = isApiDataMode ? apiSummary?.leaveEntitlements ?? [] : getLeaveEntitlements()
+  const balances = calculateLeaveBalances(employee.userId, types, entitlements, requests)
+  const leaveLabel = (typeId: string) => {
+    const type = types.find((item) => item.id === typeId)
+    if (!type) return typeId
+    const key = type.code === 'sick' ? 'leaveSick' : type.code === 'unpaid' ? 'leaveUnpaid' : type.code === 'annual' ? 'leaveAnnual' : type.nameKey
+    return t[key as keyof typeof t] || type.nameKey
+  }
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
     const data = new FormData(event.currentTarget)
@@ -65,23 +116,47 @@ export function EmployeeLeavePage() {
       return
     }
 
+    if (isApiDataMode) {
+      if (busy) return
+      setBusy(true)
+      try {
+        await apiData('/api/v1/leave-requests', {
+          method: 'POST',
+          body: JSON.stringify({
+            leave_type_id: typeId,
+            start_date: start,
+            end_date: end,
+            from_half: fromHalf,
+            to_half: toHalf,
+            backup_employee_id: backupUserId,
+            note,
+          }),
+        })
+        setOpen(false)
+        setMessage(t.requestSent)
+        setReload((value) => value + 1)
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : t.saveFailed)
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
+
     const duration = workingLeaveDays(start, end, getHolidays(), employee, fromHalf, toHalf)
     if (duration <= 0) {
       setError(t.invalidDates)
       return
     }
-
     if (hasLeaveOverlap(getLeaveRequests(), employee.userId, start, end)) {
       setError(t.overlapError)
       return
     }
-
     const balance = balances.find((item) => item.type.id === typeId)
     if (balance && duration > balance.remaining) {
       setError(t.insufficientBalance)
       return
     }
-
     submitLeaveRequest({
       userId: employee.userId,
       employee: employeeFullName(employee),
@@ -104,7 +179,7 @@ export function EmployeeLeavePage() {
 
   const cancelPending = (request: LeaveRequest) => {
     if (!window.confirm(t.cancelConfirm)) return
-    if (cancelLeaveRequest(request.id, employee.userId)) {
+    if (!isApiDataMode && cancelLeaveRequest(request.id, employee.userId)) {
       setDetail(null)
       setMessage(t.requestCancelled)
     }
@@ -113,27 +188,27 @@ export function EmployeeLeavePage() {
   return (
     <div className="page employee-page">
       <PageHeader eyebrow={t.employeePortal} title={t.leavePageTitle} subtitle={t.leavePageSubtitle}>
-        <button className="button primary" onClick={() => setOpen(true)}>
+        <button className="button primary" disabled={busy || types.length === 0} onClick={() => setOpen(true)}>
           {t.newRequest}
         </button>
       </PageHeader>
 
-      {message && <div className="toast-inline">{message}</div>}
-      {error && !open && <div className="toast-inline toast-error">{error}</div>}
+      {message && <div className="toast-inline" role="status">{message}</div>}
+      {error && <div className="toast-inline toast-error" role="alert">{error}</div>}
 
       <section className="kpi-grid employee-kpis">
         {balances.map((balance) => {
           const usedPercent = balance.entitlement ? Math.round((balance.used / balance.entitlement) * 100) : 0
           return (
             <article className="kpi-card" key={balance.type.id}>
-              <span className="kpi-label">{t[balance.type.nameKey as keyof typeof t] || balance.type.nameKey}</span>
+              <span className="kpi-label">{leaveLabel(balance.type.id)}</span>
               <strong className="kpi-value">
                 {balance.remaining}
                 <small>{t.days}</small>
               </strong>
               <ProgressBar
                 percentage={usedPercent}
-                tone={balance.type.id === 'sick' ? 'orange' : balance.type.id === 'unpaid' ? 'purple' : 'blue'}
+                tone={balance.type.code === 'sick' ? 'orange' : balance.type.code === 'unpaid' ? 'purple' : 'blue'}
                 label={`${balance.remaining} ${t.days}`}
               />
               <div className="kpi-trend">
@@ -168,9 +243,9 @@ export function EmployeeLeavePage() {
             <tbody>
               {requests.length ? (
                 requests.map((request) => (
-                  <tr key={request.id} onClick={() => setDetail(request)} style={{ cursor: 'pointer' }}>
+                  <tr id={`request-${request.id}`} key={request.id} onClick={() => setDetail(request)} style={{ cursor: 'pointer' }}>
                     <td>{request.id}</td>
-                    <td>{t[request.typeId === 'sick' ? 'leaveSick' : request.typeId === 'unpaid' ? 'leaveUnpaid' : 'leaveAnnual']}</td>
+                    <td>{leaveLabel(request.typeId)}</td>
                     <td>
                       {formatDate(request.start, language)} – {formatDate(request.end, language)}
                     </td>
@@ -205,6 +280,8 @@ export function EmployeeLeavePage() {
           colleagues={colleagues}
           employee={employee}
           error={error}
+          saving={busy}
+          apiMode={isApiDataMode}
           onClose={() => { setOpen(false); setError('') }}
           onSubmit={submit}
         />
@@ -220,7 +297,7 @@ export function EmployeeLeavePage() {
               </button>
             </div>
             <div className="leave-form">
-              <p><strong>{t.type}</strong> {t[detail.typeId === 'sick' ? 'leaveSick' : detail.typeId === 'unpaid' ? 'leaveUnpaid' : 'leaveAnnual']}</p>
+              <p><strong>{t.type}</strong> {leaveLabel(detail.typeId)}</p>
               <p><strong>{t.dateRange}</strong> {formatDate(detail.start, language)} – {formatDate(detail.end, language)}</p>
               <p><strong>{t.duration}</strong> {detail.duration} {t.workingDays}</p>
               <p><strong>{t.backup}</strong> {detail.backup || t.none}</p>
@@ -233,7 +310,7 @@ export function EmployeeLeavePage() {
                   label={t[detail.status === 'approved' ? 'statusApproved' : detail.status === 'rejected' ? 'statusRejected' : detail.status === 'cancelled' ? 'statusCancelled' : 'statusPending']}
                 />
               </p>
-              {detail.status === 'pending' && (
+              {detail.status === 'pending' && !isApiDataMode && (
                 <button className="button secondary" onClick={() => cancelPending(detail)}>
                   {t.cancelRequest}
                 </button>
@@ -252,6 +329,8 @@ function LeaveDrawer({
   colleagues,
   employee,
   error,
+  saving,
+  apiMode,
   onClose,
   onSubmit,
 }: {
@@ -260,6 +339,8 @@ function LeaveDrawer({
   colleagues: ReturnType<typeof getEmployees>
   employee: NonNullable<ReturnType<typeof resolveEmployee>>
   error: string
+  saving: boolean
+  apiMode: boolean
   onClose: () => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
@@ -267,8 +348,8 @@ function LeaveDrawer({
   const [end, setEnd] = useState('')
   const [fromHalf, setFromHalf] = useState<HalfDay>('full')
   const [toHalf, setToHalf] = useState<HalfDay>('full')
-  const preview = start && end
-    ? workingLeaveDays(start, end || start, getHolidays(), employee, fromHalf, toHalf)
+  const preview = !apiMode && start && end
+    ? workingLeaveDays(start, end, getHolidays(), employee, fromHalf, toHalf)
     : 0
 
   return (
@@ -316,12 +397,12 @@ function LeaveDrawer({
               <option value="PM">{t.halfDayPM}</option>
             </select>
           </label>
-          {preview > 0 && (
+          {!apiMode && preview > 0 && (
             <p className="missing-fields">
               {preview} {t.workingDays} {t.excludingHolidays}
             </p>
           )}
-          <label>
+          {colleagues.length > 0 && <label>
             {t.backupColleague}
             <select name="backup" defaultValue="">
               <option value="">{t.selectBackup}</option>
@@ -331,7 +412,7 @@ function LeaveDrawer({
                 </option>
               ))}
             </select>
-          </label>
+          </label>}
           <label>
             {t.reason}
             <input name="note" placeholder={t.reason} />
@@ -340,8 +421,8 @@ function LeaveDrawer({
             <button type="button" className="button secondary" onClick={onClose}>
               {t.cancel}
             </button>
-            <button type="submit" className="button primary">
-              {t.submitRequest}
+            <button type="submit" className="button primary" disabled={saving}>
+              {saving ? t.saving : t.submitRequest}
             </button>
           </div>
         </form>

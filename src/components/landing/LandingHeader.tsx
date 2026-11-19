@@ -168,17 +168,22 @@ export function LandingHeader({ theme, onThemeToggle, onLanguageChange, onLogin,
           <button
             type="button"
             onClick={onLogin}
-            className="hidden rounded-full px-4 py-2 text-sm font-semibold text-ihr-fg transition-colors hover:bg-ihr-card-2 lg:inline-flex"
+            className="hidden rounded-full px-4 py-2 text-sm font-semibold text-ihr-fg transition-colors hover:bg-ihr-card-2 lg:inline-flex text-nowrap"
           >
             {t.nav.signIn}
           </button>
-          <button
-            type="button"
-            onClick={onGetStarted}
-            className="hidden rounded-full px-4 py-2 text-sm font-semibold transition-transform hover:-translate-y-0.5 ihr-btn-primary md:inline-flex"
-          >
-            {t.nav.getStarted}
-          </button>
+              <a
+                  href={t.nav.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    setOpen(false);
+                    onGetStarted?.();
+                  }}
+                  className="block w-full rounded-full px-4 py-3 text-center text-sm font-semibold ihr-btn-primary"
+                >
+                  {t.nav.getStarted}
+                </a>  
           <button
             type="button"
             aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
@@ -242,16 +247,18 @@ export function LandingHeader({ theme, onThemeToggle, onLanguageChange, onLogin,
                 >
                   {t.nav.signIn}
                 </button>
-                <button
-                  type="button"
+                <a
+                  href={t.nav.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => {
                     setOpen(false);
                     onGetStarted?.();
                   }}
-                  className="rounded-full px-4 py-3 text-sm font-semibold ihr-btn-primary"
+                  className="block w-full rounded-full px-4 py-3 text-center text-sm font-semibold ihr-btn-primary"
                 >
                   {t.nav.getStarted}
-                </button>
+                </a>  
               </div>
             </div>
           </motion.div>

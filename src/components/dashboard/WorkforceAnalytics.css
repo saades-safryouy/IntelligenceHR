@@ -1,0 +1,572 @@
+/*
+  THEME CONNECTION
+  Tokens map chart colours to the variables your app sets on .app and
+  .app.light (--blue, --mint, --orange, --red, --purple, --muted, --line,
+  --surface...). Dark and light mode switch automatically with .app.light.
+*/
+.wa {
+  --wa-accent: var(--blue, #3b82f6);
+  --wa-success: var(--mint, #34d399);
+  --wa-warning: var(--orange, #fbbf24);
+  --wa-danger: var(--red, #fb7185);
+  --wa-muted: var(--muted-2, #64748b);
+
+  --wa-c1: var(--blue, #3b82f6);
+  --wa-c2: var(--purple, #8b7cf6);
+  --wa-c3: var(--mint, #34d399);
+  --wa-c4: var(--orange, #fbbf24);
+  --wa-c5: #22b8cf;
+  --wa-c6: #ec6aa6;
+
+  --wa-text: var(--text, currentColor);
+  --wa-soft: var(--surface-raised, rgba(128, 138, 158, 0.16));
+  --wa-line: var(--line, rgba(128, 138, 158, 0.28));
+
+  /* Tooltip flips with the theme */
+  --wa-tip-bg: var(--text, #1f2937);
+  --wa-tip-text: var(--surface, #ffffff);
+}
+
+/* ---------- shared ---------- */
+.wa .analytics-heading {
+  min-height: 0;
+  margin-bottom: 16px;
+}
+
+.wa .analytics-heading h2 {
+  margin: 0 0 4px;
+}
+
+.wa-sub {
+  margin: 0 0 10px;
+  color: var(--wa-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wa-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  color: var(--muted, var(--wa-muted));
+  font-size: 11px;
+}
+
+.wa-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 3px;
+}
+
+.wa-swatch.wa-round {
+  border-radius: 50%;
+}
+
+.wa-capitalize {
+  text-transform: capitalize;
+}
+
+.wa .is-dim {
+  opacity: 0.4;
+}
+
+/* ---------- employee growth chart ---------- */
+.wa-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.wa-stop-accent {
+  stop-color: var(--wa-accent);
+}
+
+.wa-grid-line {
+  stroke: var(--wa-line);
+  stroke-dasharray: 3 5;
+}
+
+.wa-tick,
+.wa-axis {
+  fill: var(--wa-muted);
+  font-size: 11px;
+}
+
+.wa-line-head,
+.wa-line-hires {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wa-line-head {
+  stroke: var(--wa-accent);
+}
+
+.wa-line-hires {
+  stroke: var(--wa-success);
+}
+
+.wa-guide {
+  stroke: var(--wa-accent);
+  stroke-opacity: 0.35;
+  stroke-dasharray: 4 4;
+}
+
+.wa-point-head,
+.wa-point-hires {
+  fill: var(--surface, #fff);
+  stroke-width: 2.5;
+}
+
+.wa-point-head {
+  stroke: var(--wa-accent);
+}
+
+.wa-point-hires {
+  stroke: var(--wa-success);
+}
+
+.wa-chart rect:focus-visible {
+  outline: none;
+  fill: var(--wa-accent);
+  fill-opacity: 0.08;
+}
+
+.wa-tip-bg {
+  fill: var(--wa-tip-bg);
+}
+
+.wa-tip-title {
+  fill: var(--wa-tip-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wa-tip-text {
+  fill: var(--wa-tip-text);
+  fill-opacity: 0.85;
+  font-size: 11.5px;
+}
+
+/* ---------- donut ---------- */
+.wa-donut-box {
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+}
+
+.wa-donut-box svg {
+  width: min(170px, 100%);
+  height: auto;
+}
+
+.wa-donut-track,
+.wa-donut-seg {
+  fill: none;
+  stroke-width: 5.4;
+}
+
+.wa-donut-track {
+  stroke: var(--wa-soft);
+}
+
+.wa-donut-seg {
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transform-origin: 21px 21px;
+  transition: stroke-width 0.15s ease, opacity 0.15s ease;
+}
+
+.wa-donut-seg.is-active {
+  stroke-width: 6.8;
+}
+
+.wa-donut-value {
+  fill: var(--wa-text);
+  font-size: 7px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.wa-donut-label {
+  fill: var(--muted, var(--wa-muted));
+  font-size: 2.6px;
+  text-anchor: middle;
+}
+
+.wa-legend {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-scroll {
+  max-height: 170px;
+  overflow-y: auto;
+}
+
+.wa-legend-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 8px 1fr auto 52px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wa-text);
+  font: inherit;
+  font-size: 12px;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.wa-legend-row:hover {
+  background: var(--wa-soft);
+}
+
+.wa-legend-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-count {
+  color: var(--muted, var(--wa-muted));
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-legend-row strong {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- leave overview ---------- */
+.wa-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.wa-stat strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.wa-stat span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted, var(--wa-muted));
+  font-size: 11px;
+}
+
+.wa-leave-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 240px);
+  gap: 22px;
+  align-items: start;
+}
+
+.wa-up-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-up-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--wa-line);
+  background: transparent;
+  color: var(--wa-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.wa-up-list li:last-child .wa-up-row {
+  border-bottom: 0;
+}
+
+.wa-up-row:hover {
+  background: var(--wa-soft);
+}
+
+.wa-up-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.wa-up-text strong,
+.wa-up-text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-up-text strong {
+  font-size: 12px;
+}
+
+.wa-up-text small {
+  margin-top: 3px;
+  color: var(--muted, var(--wa-muted));
+  font-size: 10.5px;
+}
+
+/* mini calendar */
+.wa-mini-cal {
+  padding: 12px;
+  border: 1px solid var(--wa-line);
+  border-radius: 12px;
+  background: var(--wa-soft);
+}
+
+.wa-mini-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.wa-nav {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted, var(--wa-muted));
+  cursor: pointer;
+}
+
+.wa-nav:hover {
+  background: var(--wa-line);
+  color: var(--wa-text);
+}
+
+.wa-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.wa-mini-dow {
+  padding: 4px 0;
+  color: var(--wa-muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.wa-mini-day {
+  position: relative;
+  min-height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--wa-text);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.wa-mini-day.is-out {
+  color: var(--wa-muted);
+  opacity: 0.6;
+}
+
+.wa-mini-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--wa-accent);
+}
+
+/* Approved leave: light chip in dark mode, dark chip in light mode */
+.wa-mini-day.is-leave {
+  background: var(--wa-text);
+  color: var(--surface, #fff);
+  opacity: 1;
+}
+
+.wa-mini-day.is-holiday::after {
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--wa-accent);
+  content: '';
+}
+
+/* ---------- employment status + organization bars ---------- */
+.wa-rows,
+.wa-org-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wa-row {
+  display: grid;
+  grid-template-columns: 78px 1fr 24px;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+}
+
+.wa-row-label {
+  overflow: hidden;
+  color: var(--muted, var(--wa-muted));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-row-value {
+  font-weight: 800;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-bar-track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--wa-soft);
+}
+
+.wa-bar-track.wa-thick {
+  height: 9px;
+}
+
+.wa-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.wa-org-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: var(--wa-soft);
+  text-align: center;
+}
+
+.wa-org-stats strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.wa-org-stats span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted, var(--wa-muted));
+  font-size: 10.5px;
+}
+
+.wa-org-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.wa-org-line small {
+  color: var(--muted, var(--wa-muted));
+  font-size: 11px;
+}
+
+/* ---------- workflow progress ---------- */
+.wa-progress-list {
+  display: grid;
+  gap: 18px;
+}
+
+.wa-progress-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.wa-progress-meta span {
+  color: var(--muted, var(--wa-muted));
+}
+
+.wa-progress-meta strong {
+  font-size: 11px;
+}
+
+.wa-progress-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--wa-soft);
+}
+
+.wa-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* ---------- focus + responsive + motion ---------- */
+.wa-legend-row:focus-visible,
+.wa-up-row:focus-visible,
+.wa-nav:focus-visible {
+  outline: 2px solid var(--wa-accent);
+  outline-offset: 1px;
+}
+
+@media (max-width: 760px) {
+  .wa-leave-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wa-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-donut-seg,
+  .wa-legend-row,
+  .wa-up-row {
+    transition: none;
+  }
+}

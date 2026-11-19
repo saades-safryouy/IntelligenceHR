@@ -22,6 +22,7 @@ import { useAuth } from '../../contexts/authHooks'
 import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 import { NotificationPanel } from '../notifications/NotificationPanel'
+import { isApiDataMode } from '../../lib/apiClient'
 
 export function AppLayout({
   language,
@@ -39,9 +40,10 @@ export function AppLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [search, setSearch] = useState('')
   const { text } = useI18n()
-  const { currentUser } = useAuth()
+  const { currentUser, hasPermission } = useAuth()
   const navigate = useNavigate()
   const leaveLabel = translations[language].leave && typeof translations[language].leave === 'object'
     ? translations[language].leave.label
@@ -49,6 +51,7 @@ export function AppLayout({
   const navText: Record<string, string> = {
     dashboard: translations[language].dashboard,
     people: translations[language].people,
+    organigramme: translations[language].organigramme,
     onboarding: translations[language].onboarding,
     offboarding: translations[language].offboarding,
     leave: leaveLabel,
@@ -95,7 +98,7 @@ export function AppLayout({
         <div className="workspace-label">{text('WORKSPACE')}</div>
 
         <nav>
-          {navItems.map(({ to, label, icon: Icon, badge }) => (
+          {navItems.filter(({ permissions }) => !permissions || permissions.some(hasPermission)).map(({ to, label, icon: Icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -240,9 +243,9 @@ export function AppLayout({
                 aria-label={text('Notifications')}
               >
                 <Bell size={19} />
-                <i>2</i>
+                {isApiDataMode ? unreadNotifications > 0 && <i>{unreadNotifications}</i> : <i>2</i>}
               </button>
-              {showNotifications && <NotificationPanel />}
+              {showNotifications && <NotificationPanel onUnreadCountChange={setUnreadNotifications} />}
             </div>
 
             <div className="top-user">

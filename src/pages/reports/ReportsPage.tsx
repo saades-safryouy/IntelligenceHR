@@ -1,145 +1,54 @@
-import { useState } from 'react'
-import { FileText } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarDays, FileWarning, UserCheck, UserRound, Users } from 'lucide-react'
 import { PageHeader } from '../../components/common/PageHeader'
-import { PanelTitle } from '../../components/common/PanelTitle'
-import { getEmployees, getLeaveRequests } from '../../data/employeeStore'
-import { useEmployeeStore } from '../../hooks/useEmployeeStore'
-import { downloadFile, generateCsv } from '../../components/dashboard/DashboardUtils'
+import { getAnalyticsOverview } from '../../data/analyticsApi'
+import type { AnalyticsOverview } from '../../data/analyticsRepository'
+import { isApiDataMode } from '../../lib/apiClient'
+import './ReportsPage.css'
 
-const monthFormatter = new Intl.DateTimeFormat(undefined, { month: 'short' })
+type Tab = 'workforce' | 'cumulative' | 'annual' | 'tenure' | 'gender' | 'internal' | 'leave' | 'lifecycle' | 'operations'
+const tabs: Array<[Tab, string]> = [['workforce', 'Workforce'], ['cumulative', 'Cumulative hires'], ['annual', 'Annual hires'], ['tenure', 'Tenure'], ['gender', 'Gender diversity'], ['internal', 'Internal vs external'], ['leave', 'Leave'], ['lifecycle', 'Lifecycle'], ['operations', 'Operations']]
 
-function monthBuckets(monthCount: number) {
-  const now = new Date()
-  return Array.from({ length: monthCount }, (_, index) => {
-    const date = new Date(now.getFullYear(), now.getMonth() - monthCount + index + 1, 1)
-    return {
-      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
-      label: monthFormatter.format(date),
-    }
-  })
+function Metric({ label, value, note, icon }: { label: string; value: string; note: string; icon: React.ReactNode }) {
+  return <article className="reports-kpi"><span className="reports-kpi-icon">{icon}</span><span>{label}</span><strong>{value}</strong><small>{note}</small></article>
+}
+function Distribution({ title, rows }: { title: string; rows: Array<{ label: string; value: number }> }) {
+  const max = Math.max(1, ...rows.map((row) => row.value))
+  return <section className="reports-panel"><h2>{title}</h2>{rows.length ? rows.map((row) => <div className="reports-distribution-row" key={row.label}><div><span>{row.label}</span><strong>{row.value}</strong></div><div className="reports-bar"><span style={{ width: `${Math.round(row.value / max * 100)}%` }} /></div></div>) : <p className="reports-empty">No records are available.</p>}</section>
 }
 
 export function ReportsPage() {
-  useEmployeeStore()
-  const [period, setPeriod] = useState(6)
-  const employees = getEmployees()
-  const leaveRequests = getLeaveRequests()
-  const buckets = monthBuckets(period)
-
-  const joinsByMonth = buckets.map(({ key, label }) => ({
-    label,
-    value: employees.filter((employee) => employee.joined?.startsWith(key)).length,
-  }))
-  const leaveByMonth = buckets.map(({ key, label }) => ({
-    label,
-    value: leaveRequests.filter((request) => request.submittedAt?.startsWith(key)).length,
-  }))
-  const departments = employees.reduce<Record<string, number>>((counts, employee) => {
-    counts[employee.department] = (counts[employee.department] ?? 0) + 1
-    return counts
-  }, {})
-  const departmentEntries = Object.entries(departments).sort((a, b) => b[1] - a[1])
-  const colors = ['blue', 'mint', 'orange', 'purple', 'rose', 'slate']
-  const chartColors = ['#3f8df5', '#38c7a3', '#f5ae45', '#7d86c9', '#ef7185', '#718096']
-  const departmentGradient = departmentEntries.reduce<{ stops: string[]; end: number }>(
-    (gradient, [, count], index) => {
-      const end = gradient.end + (count / employees.length) * 100
-      gradient.stops.push(`${chartColors[index % chartColors.length]} ${gradient.end}% ${end}%`)
-      return { stops: gradient.stops, end }
-    },
-    { stops: [], end: 0 },
-  ).stops.join(', ')
-
-  const exportReport = () => {
-    const rows = [
-      ['Employee joins', ...joinsByMonth.map(({ value }) => value)],
-      ['Leave requests submitted', ...leaveByMonth.map(({ value }) => value)],
-    ]
-    const departmentRows = departmentEntries.map(([department, count]) => [department, count])
-    const csv = [
-      generateCsv(['Metric', ...buckets.map(({ label }) => label)], rows),
-      '',
-      generateCsv(['Department', 'Employees'], departmentRows),
-    ].join('\n')
-    downloadFile(csv, 'hr-workforce-report.csv')
-  }
-
-  const renderBars = (values: Array<{ label: string; value: number }>, emptyLabel: string) => {
-    const max = Math.max(...values.map(({ value }) => value), 0)
-    if (!max) return <div className="report-empty">{emptyLabel}</div>
-    return (
-      <div className="report-bars" role="img" aria-label={values.map(({ label, value }) => `${label}: ${value}`).join(', ')}>
-        {values.map(({ label, value }) => (
-          <div className="report-bar-column" key={label} title={`${label}: ${value}`}>
-            <i style={{ height: `${Math.max((value / max) * 100, 3)}%` }} />
-            <small>{label}</small>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
+  const [tab, setTab] = useState<Tab>('workforce')
+  const [from, setFrom] = useState(`${new Date().getFullYear()}-01-01`)
+  const [to, setTo] = useState(new Date().toISOString().slice(0, 10))
+  const [data, setData] = useState<AnalyticsOverview | null>(null)
+  const [loading, setLoading] = useState(isApiDataMode)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    if (!isApiDataMode) return
+    let active = true
+    setLoading(true)
+    getAnalyticsOverview({ from, to }).then((result) => { if (active) setData(result) }).catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : 'Reports could not be loaded.') }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [from, to])
+  const status = useMemo(() => data?.workforce.statusDistribution.map((row) => ({ label: row.status, value: Number(row.total) })) ?? [], [data])
+  const departments = useMemo(() => data?.workforce.departmentDistribution.map((row) => ({ label: row.name, value: Number(row.total) })) ?? [], [data])
+  const leave = useMemo(() => Object.entries(data?.leave.byStatus ?? {}).map(([label, value]) => ({ label, value: Number(value) })), [data])
+  if (!isApiDataMode) return <div className="reports-page"><PageHeader eyebrow="REPORTS" title="HR reports" subtitle="Reports require the connected API." /></div>
+  if (loading) return <div className="reports-page"><PageHeader eyebrow="REPORTS" title="HR reports" subtitle="Loading analytics…" /><div className="reports-state">Loading reports…</div></div>
+  if (error || !data) return <div className="reports-page"><PageHeader eyebrow="REPORTS" title="HR reports" subtitle="Permission-scoped analytics." /><div className="reports-state error">{error || 'Reports unavailable.'}</div></div>
   return (
-    <div className="page">
-      <PageHeader
-        eyebrow="PEOPLE ANALYTICS"
-        title="Reports"
-        subtitle="Explore workforce activity based on your saved HR data."
-      >
-        <label className="report-period-control">
-          <span>Period</span>
-          <select value={period} onChange={(event) => setPeriod(Number(event.target.value))}>
-            <option value={6}>Last 6 months</option>
-            <option value={12}>Last 12 months</option>
-          </select>
-        </label>
-        <button type="button" className="button primary" onClick={exportReport}>
-          <FileText size={16} />
-          Export report
-        </button>
-      </PageHeader>
-
-      <div className="report-grid">
-        <section className="panel report-card wide">
-          <PanelTitle title="Employee joins" subtitle={`Saved join dates · last ${period} months`} action="" />
-          {renderBars(joinsByMonth, 'No employee join dates in this period.')}
-        </section>
-
-        <section className="panel report-card">
-          <PanelTitle title="Department mix" subtitle={`${employees.length} employees`} action="" />
-          {departmentEntries.length ? (
-            <>
-              <div
-                className="donut-chart report-donut"
-                role="img"
-                aria-label={`${employees.length} employees across ${departmentEntries.length} departments`}
-                style={{ background: `radial-gradient(circle,var(--surface) 57%,transparent 58%),conic-gradient(${departmentGradient})` }}
-              >
-                <strong>
-                  {employees.length}
-                  <small>people</small>
-                </strong>
-              </div>
-              <div className="report-legend">
-                {departmentEntries.map(([department, count], index) => (
-                  <span key={department}>
-                    <i className={`legend-dot ${colors[index % colors.length]}`} />
-                    {department} · {count}
-                  </span>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="report-empty">No employee data available.</div>
-          )}
-        </section>
-
-        <section className="panel report-card wide">
-          <PanelTitle title="Leave requests" subtitle={`Requests submitted · last ${period} months`} action="" />
-          {renderBars(leaveByMonth, 'No leave requests submitted in this period.')}
-        </section>
-      </div>
+    <div className="reports-page">
+      <PageHeader eyebrow="REPORTS CENTER" title="HR analytics reports" subtitle="Real, permission-scoped HR reporting." />
+      <div className="reports-toolbar"><div className="reports-date-filter"><label>From<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label><label>To<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label></div><span>{data.scope.employeeCount} authorized records</span></div>
+      <nav className="reports-tabs">{tabs.map(([key, label]) => <button key={key} type="button" className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>)}</nav>
+      <div className="reports-kpi-grid"><Metric label="Headcount" value={String(data.workforce.headcount)} note={`${data.workforce.active} active`} icon={<Users size={18} />} /><Metric label="New hires" value={String(data.workforce.newHires)} note="Selected period" icon={<UserCheck size={18} />} /><Metric label="Approved leave" value={String(data.leave.approvedDays)} note={`${data.leave.upcomingAbsences} upcoming`} icon={<CalendarDays size={18} />} /><Metric label="Onboarding active" value={String(data.onboarding.active)} note={`${data.onboarding.overdueTasks} overdue`} icon={<UserRound size={18} />} /></div>
+      {tab === 'workforce' && <div className="reports-grid"><Distribution title="Department headcount" rows={departments} /><Distribution title="Employment status" rows={status} /></div>}
+      {tab === 'leave' && <Distribution title="Leave by status" rows={leave} />}
+      {(tab === 'cumulative' || tab === 'annual') && <section className="reports-panel"><h2>{tab === 'cumulative' ? 'Cumulative hires' : 'Annual hires'}</h2><p>Hires use valid employees.joined_at records. Historical snapshots are unavailable.</p><div className="reports-highlight"><strong>{data.workforce.newHires}</strong><span>Recorded hires</span></div></section>}
+      {tab === 'internal' && <section className="reports-panel"><h2>Internal vs external hires</h2><div className="reports-unavailable"><FileWarning size={20} /><span>Unavailable: no authoritative hiring-source classification is stored.</span></div></section>}
+      {(tab === 'tenure' || tab === 'gender') && <section className="reports-panel"><h2>{tab === 'tenure' ? 'Employee tenure' : 'Gender diversity'}</h2><div className="reports-unavailable"><FileWarning size={20} /><span>This metric requires the next backend aggregate extension. No unsupported values are fabricated.</span></div></section>}
     </div>
   )
 }
+

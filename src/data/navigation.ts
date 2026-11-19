@@ -11,6 +11,8 @@ import {
   Clock3,
   GraduationCap,
   WalletCards,
+  Workflow,
+  Network,
 } from 'lucide-react'
 
 
@@ -19,6 +21,7 @@ export type NavItem = {
   label: string
   icon: typeof LayoutDashboard
   badge?: string
+  permissions?: string[]
 }
 
 export const navItems: NavItem[] = [
@@ -31,7 +34,12 @@ export const navItems: NavItem[] = [
     to: '/app/employees',
     label: 'people',
     icon: Users,
-    badge: '248',
+  },
+  {
+    to: '/app/organigramme',
+    label: 'organigramme',
+    icon: Network,
+    permissions: ['organigram.view', 'people.employee.view.all', 'people.employee.view.department', 'people.employee.self.view'],
   },
   {
     to: '/app/onboarding/requests',
@@ -49,6 +57,12 @@ export const navItems: NavItem[] = [
     icon: CalendarDays,
   },
   {
+    to: '/app/workflows',
+    label: 'workflows',
+    icon: Workflow,
+    permissions: ['workflow.instance.view', 'workflow.instance.view.all', 'workflow.instance.start', 'workflow.approve', 'workflow.history.view', 'workflow.template.view', 'workflow.delegate'],
+  },
+  {
     to: '/app/holidays',
     label: 'holidays',
     icon: CalendarDays,
@@ -63,17 +77,7 @@ export const navItems: NavItem[] = [
     label: 'calendar',
     icon: CalendarDays,
   },
-  {
-    to: '/app/reports',
-    label: 'reports',
-    icon: BarChart3,
-  },
-  {
-    to: '/app/settings',
-    label: 'settings',
-    icon: Settings,
-  },
-  {
+   {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
     icon: BriefcaseBusiness,
@@ -85,10 +89,16 @@ export const navItems: NavItem[] = [
     icon: Clock3,
   },
   {
-    to: '/app/settings/advanced',
-    label: 'advancedSettings',
-    icon: GraduationCap,
+    to: '/app/reports',
+    label: 'reports',
+    icon: BarChart3,
   },
+  {
+    to: '/app/settings',
+    label: 'settings',
+    icon: Settings,
+  }
+ 
 ]
 
 export const futureModules = [

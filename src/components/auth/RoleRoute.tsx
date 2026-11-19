@@ -20,8 +20,9 @@ export function RoleRoute({ children, roles }: RoleRouteProps) {
     // Redirect based on user's actual role
     if (role === 'Employee') {
       return <Navigate to="/employee/dashboard" replace />
+    } else if (role === 'Manager' || role === 'Department Head') {
+      return <Navigate to="/manager/dashboard" replace />
     } else {
-      // HR and Manager roles go to HR dashboard
       return <Navigate to="/app/dashboard" replace />
     }
   }

@@ -1,15 +1,19 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/authHooks'
 import { useI18n } from '../../contexts/I18nContext'
 import { PageHeader } from '../../components/common/PageHeader'
 import { resolveEmployee, updateEmployeeProfile } from '../../data/employeeStore'
+import { apiEmployeeRepository } from '../../data/apiEmployeeRepository'
+import { isApiDataMode } from '../../lib/apiClient'
 import { calculateProfileCompletion } from '../../utils/profileCompletion'
 import { formatDate } from '../../utils/dates'
 import { employeeDashboardTranslations } from './translations'
 import { ProfileCard, ProgressBar } from './components'
 import type { MaritalStatus } from '../../types/models'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
+import type { Employee } from '../../types/models'
+import { EmployeeDocumentsPanel } from './EmployeeDocumentsPanel'
 
 const MARITAL: MaritalStatus[] = ['Single', 'Married', 'Divorced', 'Widowed']
 
@@ -20,23 +24,70 @@ export function EmployeeProfilePage() {
   const t = employeeDashboardTranslations[language]
   const [params] = useSearchParams()
   const startEditing = params.get('edit') === '1'
-  const [employee, setEmployee] = useState(() => resolveEmployee(currentUser))
+  const showingDocuments = params.get('tab') === 'documents'
+  const [employee, setEmployee] = useState<Employee | undefined>(() => isApiDataMode ? undefined : resolveEmployee(currentUser))
   const [editing, setEditing] = useState(startEditing)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(isApiDataMode)
+  const [reload, setReload] = useState(0)
+
+  useEffect(() => {
+    if (!isApiDataMode) return
+    const employeeId = currentUser?.employeeId
+    if (!employeeId) {
+      setLoading(false)
+      setError(t.notFound)
+      return
+    }
+    let active = true
+    setLoading(true)
+    setError('')
+    apiEmployeeRepository.get(employeeId)
+      .then((record) => {
+        if (!record) throw new Error(t.notFound)
+        if (active) setEmployee(record)
+      })
+      .catch((cause: unknown) => {
+        if (active) setError(cause instanceof Error ? cause.message : t.loadFailed)
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [currentUser?.employeeId, reload, t.loadFailed, t.notFound])
+
+  if (loading) {
+    return <div className="page employee-page"><div className="empty-block" role="status">{t.loading}</div></div>
+  }
 
   if (!employee) {
     return (
       <div className="page employee-profile-page">
-        <div className="empty-block">{t.notFound}</div>
+        {error ? <div className="toast-inline toast-error" role="alert">{error}</div> : <div className="empty-block">{t.notFound}</div>}
+        {isApiDataMode && error !== t.notFound && (
+          <button className="button secondary" onClick={() => setReload((value) => value + 1)}>{t.tryAgain}</button>
+        )}
+      </div>
+    )
+  }
+
+  if (showingDocuments) {
+    return (
+      <div className="page employee-page employee-profile-page">
+        <PageHeader eyebrow={t.employeePortal} title={t.profileTitle} subtitle={t.profileSubtitle}>
+          <Link to="/employee/profile?tab=profile" className="button secondary">{t.profileDetailsTab}</Link>
+          <Link to="/employee/documents" className="button primary">{t.navDocuments}</Link>
+        </PageHeader>
+        {isApiDataMode
+          ? <EmployeeDocumentsPanel employeeId={employee.id} />
+          : <section className="panel"><div className="empty-state" role="status">{t.noDocuments}</div></section>}
       </div>
     )
   }
 
   const { percentage, missing } = calculateProfileCompletion(employee)
 
-  const onSave = (event: FormEvent<HTMLFormElement>) => {
+  const onSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
     const data = new FormData(event.currentTarget)
@@ -78,21 +129,25 @@ export function EmployeeProfilePage() {
         ? new Date().toISOString()
         : employee.personalInfoCompletedAt
 
-    const updated = updateEmployeeProfile(employee.userId, {
-      ...next,
-      personalInfoCompletedAt: completed,
-    })
-    setSaving(false)
-    if (updated) {
+    try {
+      const updated = isApiDataMode
+        ? await apiEmployeeRepository.update(employee.id, next)
+        : updateEmployeeProfile(employee.userId, { ...next, personalInfoCompletedAt: completed })
+      if (!updated) throw new Error(t.saveFailed)
       setEmployee(updated)
       setEditing(false)
       setSaved(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t.saveFailed)
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
     <div className="page employee-page employee-profile-page">
       <PageHeader eyebrow={t.employeePortal} title={t.profileTitle} subtitle={t.profileSubtitle}>
+        <Link to="/employee/profile?tab=documents" className="button secondary">{t.profileDocumentsTab}</Link>
         <Link to="/employee/dashboard" className="button secondary">
           {t.navDashboard}
         </Link>

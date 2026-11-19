@@ -1,5 +1,6 @@
-import { useMemo, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
 import { Plus, FileText } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/common/PageHeader'
 import { Breadcrumb } from '../../components/common/Breadcrumb'
 import { StatusBadge } from '../../components/employees/StatusBadge'
@@ -12,6 +13,8 @@ import {
   rejectLeaveRequest,
   submitLeaveRequest,
 } from '../../data/employeeStore'
+import { employeeRepository, holidayRepository, leaveRequestRepository } from '../../data/mockRepository'
+import { apiData, isApiDataMode } from '../../lib/apiClient'
 import { downloadFile, generateCsv } from '../../components/dashboard/DashboardUtils'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import { employeeFullName } from '../../utils/employeeHelpers'
@@ -19,7 +22,8 @@ import { employeeDashboardTranslations } from '../employee/translations'
 import { hasLeaveOverlap, workingLeaveDays } from '../../utils/leave'
 import { translations } from '../../contexts/I18nContext'
 import { useI18n } from '../../contexts/I18nContext'
-import type { HalfDay, LeaveStatus } from '../../types/models'
+import { useAuth } from '../../contexts/authHooks'
+import type { Employee, HalfDay, Holiday, LeaveRequest, LeaveStatus, LeaveType } from '../../types/models'
 
 interface LeaveForm {
   employeeId: string
@@ -45,7 +49,9 @@ const initialForm = (): LeaveForm => ({
 
 export function LeavePage() {
   useEmployeeStore()
-  const { language } = useI18n()
+  const navigate = useNavigate()
+  const { language, text } = useI18n()
+  const { hasPermission } = useAuth()
   const t = translations[language]
   const employeeCopy = employeeDashboardTranslations[language]
   const [status, setStatus] = useState<LeaveStatus | 'all'>('all')
@@ -54,13 +60,46 @@ export function LeavePage() {
   const [form, setForm] = useState<LeaveForm>(initialForm)
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
-  const employees = getEmployees().filter((employee) => employee.status !== 'Terminated')
-  const types = getLeaveTypes()
-  const leaveRequests = getLeaveRequests()
+  const [employees, setEmployees] = useState<Employee[]>(() => (!isApiDataMode ? getEmployees().filter((employee) => employee.status !== 'Terminated') : []))
+  const [holidays, setHolidays] = useState<Holiday[]>(() => (!isApiDataMode ? getHolidays() : []))
+  const [types, setTypes] = useState<LeaveType[]>(() => (!isApiDataMode ? getLeaveTypes() : []))
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(() => (!isApiDataMode ? getLeaveRequests() : []))
+  const [loadingRequests, setLoadingRequests] = useState(isApiDataMode)
+  const [submitting, setSubmitting] = useState(false)
+
+  const loadLeaveRequests = () => {
+    setLoadingRequests(true)
+    leaveRequestRepository.list()
+      .then((res) => setLeaveRequests(res.data))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load leave requests.'))
+      .finally(() => setLoadingRequests(false))
+  }
+
+  useEffect(() => {
+    if (isApiDataMode) {
+      loadLeaveRequests()
+      Promise.all([
+        employeeRepository.list({ page: 1, pageSize: 100 }),
+        holidayRepository.list(),
+        apiData<Array<{ id: string; name_key: string; color: string; paid: boolean }>>('/api/v1/leave-types'),
+      ])
+        .then(([employeePage, holidayPage, leaveTypes]) => {
+          setEmployees(employeePage.data.filter((employee) => employee.status !== 'Terminated'))
+          setHolidays(holidayPage.data)
+          setTypes(leaveTypes.map((item) => ({
+            id: item.id,
+            nameKey: item.name_key,
+            color: item.color,
+            paid: item.paid,
+          })))
+        })
+        .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load leave request options.'))
+    }
+  }, [])
   const selectedEmployee = employees.find((employee) => String(employee.userId) === form.employeeId)
   const previewDuration =
     selectedEmployee && form.start && form.end
-      ? workingLeaveDays(form.start, form.end, getHolidays(), selectedEmployee, form.fromHalf, form.toHalf)
+      ? workingLeaveDays(form.start, form.end, holidays, selectedEmployee, form.fromHalf, form.toHalf)
       : 0
 
   const filtered = useMemo(
@@ -82,6 +121,10 @@ export function LeavePage() {
   )
 
   const handleApprove = (requestId: string) => {
+    if (isApiDataMode) {
+      navigate(`/app/workflows?resourceType=leave_request&resourceId=${encodeURIComponent(requestId)}`)
+      return
+    }
     if (approveLeaveRequest(requestId)) {
       setFeedback('Leave request approved.')
       setExpandedId(null)
@@ -89,6 +132,10 @@ export function LeavePage() {
   }
 
   const handleReject = (requestId: string) => {
+    if (isApiDataMode) {
+      navigate(`/app/workflows?resourceType=leave_request&resourceId=${encodeURIComponent(requestId)}`)
+      return
+    }
     if (rejectLeaveRequest(requestId)) {
       setFeedback('Leave request rejected.')
       setExpandedId(null)
@@ -131,7 +178,7 @@ export function LeavePage() {
       return
     }
     const backup = employees.find((person) => String(person.userId) === form.backupUserId)
-    submitLeaveRequest({
+    const newReq = {
       userId: employee.userId,
       employee: employeeFullName(employee),
       typeId: type.id,
@@ -144,12 +191,29 @@ export function LeavePage() {
       backup: backup ? employeeFullName(backup) : '',
       backupUserId: backup?.userId ?? null,
       note: form.note.trim(),
-      status: 'pending',
+      status: 'pending' as LeaveStatus,
       submittedAt: new Date().toISOString(),
-    })
-    setFormOpen(false)
-    setForm(initialForm())
-    setFeedback('Leave request created.')
+    }
+    if (isApiDataMode) {
+      if (submitting) return
+      setSubmitting(true)
+      leaveRequestRepository.create(newReq)
+        .then(() => {
+          loadLeaveRequests()
+          setFormOpen(false)
+          setForm(initialForm())
+          setFeedback('Leave request created.')
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'Failed to submit leave request.')
+        })
+        .finally(() => setSubmitting(false))
+    } else {
+      submitLeaveRequest(newReq)
+      setFormOpen(false)
+      setForm(initialForm())
+      setFeedback('Leave request created.')
+    }
   }
 
   const openForm = () => {
@@ -180,14 +244,15 @@ export function LeavePage() {
           {t.export}
         </button>
 
-        <button
+        {(!isApiDataMode || hasPermission('people.employee.create')) && <button
           type="button"
           className="button primary"
           onClick={openForm}
+          disabled={isApiDataMode && (!employees.length || !types.length)}
         >
           <Plus size={16} />
           {t.create}
-        </button>
+        </button>}
       </PageHeader>
       {feedback && <div className="toast-inline" role="status">{feedback}</div>}
 
@@ -227,7 +292,9 @@ export function LeavePage() {
         </div>
 
         <div className="leave-list">
-          {filtered.length > 0 ? (
+          {loadingRequests ? (
+            <div className="empty-state"><p>Loading leave requests…</p></div>
+          ) : filtered.length > 0 ? (
             filtered.map((request) => (
               <div key={request.id} className="leave-item">
                 <button
@@ -248,7 +315,14 @@ export function LeavePage() {
                   </span>
                   <StatusBadge status={request.status} />
                 </button>
-                {request.status === 'pending' && (
+                {request.status === 'pending' && isApiDataMode && hasPermission('workflow.approve') && (
+                  <div className="leave-actions">
+                    <button type="button" className="button secondary" onClick={() => handleApprove(request.id)}>
+                      {text('Open workflow')}
+                    </button>
+                  </div>
+                )}
+                {request.status === 'pending' && !isApiDataMode && (
                   <div className="leave-actions">
                     <button type="button" className="button secondary" onClick={() => handleReject(request.id)}>
                       Reject
@@ -333,7 +407,9 @@ export function LeavePage() {
               {previewDuration > 0 && <p className="missing-fields">Calculated duration: {previewDuration} working days.</p>}
               <div className="leave-form-actions">
                 <button type="button" className="button secondary" onClick={() => setFormOpen(false)}>Cancel</button>
-                <button type="submit" className="button primary">Create request</button>
+                <button type="submit" className="button primary" disabled={submitting || types.length === 0}>
+                  {submitting ? text('Submitting…') : text('Create request')}
+                </button>
               </div>
             </form>
           </aside>

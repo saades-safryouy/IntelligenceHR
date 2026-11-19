@@ -1,13 +1,17 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Plus, FileText, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/common/PageHeader'
 import { Breadcrumb } from '../../components/common/Breadcrumb'
-import { createOffboardingTask, getEmployees, getOffboardingTasks, updateOffboardingTask } from '../../data/employeeStore'
+import { getEmployees, getOffboardingTasks, updateOffboardingTask } from '../../data/employeeStore'
+import { employeeRepository, offboardingRepository } from '../../data/mockRepository'
+import { isApiDataMode } from '../../lib/apiClient'
+import { useAuth } from '../../contexts/authHooks'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import { downloadFile, generateCsv } from '../../components/dashboard/DashboardUtils'
 import { translations } from '../../contexts/I18nContext'
 import { useI18n } from '../../contexts/I18nContext'
-import type { RequestStatus } from '../../types/models'
+import type { Employee, OffboardingRequest, RequestStatus } from '../../types/models'
 import { formatDate } from '../../utils/dates'
 
 interface OffboardingDraft {
@@ -18,16 +22,42 @@ interface OffboardingDraft {
 
 export function OffboardingPage() {
   useEmployeeStore()
+  const { hasPermission } = useAuth()
   const { language } = useI18n()
   const t = translations[language]
   const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [error, setError] = useState('')
+  const [createBusy, setCreateBusy] = useState(false)
   const [draft, setDraft] = useState<OffboardingDraft | null>(null)
-  const employees = getEmployees().filter((employee) => employee.status !== 'Terminated')
+  const [employees, setEmployees] = useState<Employee[]>(() => (
+    !isApiDataMode ? getEmployees().filter((employee) => employee.status !== 'Terminated') : []
+  ))
 
-  const requests = getOffboardingTasks()
+  const [requests, setRequests] = useState<OffboardingRequest[]>(() => (!isApiDataMode ? getOffboardingTasks() : []))
+
+  const loadRequests = () => {
+    offboardingRepository.list()
+      .then((res) => setRequests(res.data))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load offboarding requests.'))
+  }
+
+  useEffect(() => {
+    if (isApiDataMode) {
+      employeeRepository.list({ page: 1, pageSize: 100 })
+        .then((page) => setEmployees(page.data.filter((employee) => employee.status !== 'Terminated')))
+        .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load employees.'))
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isApiDataMode) {
+      loadRequests()
+    }
+  }, [])
+
   const filtered =
     statusFilter === 'all' ? requests : requests.filter((req) => req.status === statusFilter)
 
@@ -58,16 +88,27 @@ export function OffboardingPage() {
     event.preventDefault()
     if (!draft || !draft.stage.trim() || draft.progress < 0 || draft.progress > 100) return
     const completed = draft.status === 'Completed' || draft.progress === 100
-    updateOffboardingTask(requestId, {
+    const updates = {
       stage: draft.stage.trim(),
       progress: completed ? 100 : Math.round(draft.progress),
       status: completed ? 'Completed' : draft.status,
-    })
-    setDraft(null)
+    }
+    offboardingRepository.update(requestId, updates)
+      .then(() => {
+        if (isApiDataMode) {
+          loadRequests()
+        } else {
+          updateOffboardingTask(requestId, updates)
+          setRequests(getOffboardingTasks())
+        }
+        setDraft(null)
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to update offboarding request.'))
   }
 
-  const createRequest = (event: FormEvent<HTMLFormElement>) => {
+  const createRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (createBusy) return
     setCreateError('')
     const data = new FormData(event.currentTarget)
     const employee = employees.find((person) => String(person.userId) === String(data.get('employeeId')))
@@ -78,16 +119,26 @@ export function OffboardingPage() {
       setCreateError('Select an employee, exit date, and reason.')
       return
     }
-    createOffboardingTask({
+    const newReq = {
+      userId: employee.userId,
       employee: `${employee.firstName} ${employee.lastName}`,
       exitDate,
       reason,
       replacement: replacement || 'To be confirmed',
       stage: 'Exit process started',
       progress: 0,
-      status: 'On track',
-    })
-    setCreateOpen(false)
+      status: 'On track' as RequestStatus,
+    }
+    setCreateBusy(true)
+    try {
+      const request = await offboardingRepository.create(newReq)
+      setRequests((current) => [request, ...current])
+      setCreateOpen(false)
+    } catch (cause) {
+      setCreateError(cause instanceof Error ? cause.message : 'Failed to create offboarding request.')
+    } finally {
+      setCreateBusy(false)
+    }
   }
 
   const getStatusColor = (status: RequestStatus): string => {
@@ -123,18 +174,22 @@ export function OffboardingPage() {
           {t.export}
         </button>
 
-        <button
-          type="button"
-          className="button primary"
-          onClick={() => {
-            setCreateError('')
-            setCreateOpen(true)
-          }}
-        >
-          <Plus size={16} />
-          New Request
-        </button>
+        {(!isApiDataMode || hasPermission('people.employee.create')) && (
+          <button
+            type="button"
+            className="button primary"
+            onClick={() => {
+              setCreateError('')
+              setCreateOpen(true)
+            }}
+            disabled={isApiDataMode && employees.length === 0}
+          >
+            <Plus size={16} />
+            New Request
+          </button>
+        )}
       </PageHeader>
+      {error && <div className="toast-inline toast-error" role="alert">{error}</div>}
 
       <section className="stats-grid">
         <div className="stat-card">
@@ -200,6 +255,9 @@ export function OffboardingPage() {
                   >
                     {request.status}
                   </span>
+                  {request.approvalStatus && (
+                    <span className="workflow-pill">{request.approvalStatus.replaceAll('_', ' ')}</span>
+                  )}
                 </div>
                 <ChevronRight size={18} />
               </button>
@@ -223,11 +281,25 @@ export function OffboardingPage() {
                       <span>Progress</span>
                       <strong>{request.progress}%</strong>
                     </div>
+                    {request.approvalStatus && (
+                      <div>
+                        <span>Approval status</span>
+                        <strong>{request.approvalStatus.replaceAll('_', ' ')}</strong>
+                      </div>
+                    )}
                   </div>
+                  {request.approvalStatus && (
+                    <Link
+                      className="button secondary"
+                      to={`/app/workflows?resourceType=offboarding_case&resourceId=${encodeURIComponent(request.id)}`}
+                    >
+                      View workflow
+                    </Link>
+                  )}
                   <div className="progress-bar">
                     <div className="progress-fill" style={{ width: `${request.progress}%` }} />
                   </div>
-                  {draft && (
+                  {draft && (!isApiDataMode || hasPermission('people.employee.update') || hasPermission('people.employee.self.update')) && (
                     <form className="workflow-edit-form" onSubmit={(event) => saveProgress(event, request.id)}>
                       <label>Current stage
                         <input required value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value })} />
@@ -260,7 +332,7 @@ export function OffboardingPage() {
               <span id="offboarding-create-title">Create offboarding request</span>
               <button type="button" className="icon-button" onClick={() => setCreateOpen(false)} aria-label="Close">×</button>
             </div>
-            <form className="leave-form" onSubmit={createRequest}>
+            <form className="leave-form" onSubmit={(event) => void createRequest(event)}>
               {createError && <div className="toast-inline toast-error" role="alert">{createError}</div>}
               <label>Employee
                 <select name="employeeId" required defaultValue="">
@@ -281,7 +353,7 @@ export function OffboardingPage() {
               </label>
               <div className="leave-form-actions">
                 <button type="button" className="button secondary" onClick={() => setCreateOpen(false)}>Cancel</button>
-                <button type="submit" className="button primary">Create request</button>
+                <button type="submit" className="button primary" disabled={createBusy || (isApiDataMode && employees.length === 0)}>Create request</button>
               </div>
             </form>
           </aside>

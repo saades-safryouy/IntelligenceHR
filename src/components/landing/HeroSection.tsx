@@ -41,15 +41,22 @@ export function HeroSection({ onGetStarted }: { onGetStarted?: () => void }) {
             {t.hero.subtitle}
           </motion.p>
           <motion.div variants={item} className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={onGetStarted}
-              className="group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold transition-transform hover:-translate-y-0.5 ihr-btn-primary"
-            >
-              {t.hero.primary}
-              <ArrowRight className={`size-4 transition-transform group-hover:translate-x-0.5 ${isRtl ? "rotate-180" : ""}`} />
-            </button>
-            <button
+               <a
+  href={t.nav.website}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={() => onGetStarted?.()}
+  className="group inline-flex min-w-44 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ihr-primary ihr-btn-primary"
+>
+  {t.hero.primary}
+  <ArrowRight
+    aria-hidden="true"
+    className={`size-4 shrink-0 transition-transform motion-reduce:transition-none ${
+      isRtl ? "group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"
+    }`}
+  />
+</a>
+              <button
               type="button"
               onClick={() => scrollToId("features")}
               className="inline-flex items-center justify-center rounded-full border border-ihr-border bg-ihr-card px-7 py-3.5 text-base font-semibold text-ihr-fg transition-colors hover:bg-ihr-card-2"

@@ -20,6 +20,7 @@ export interface LandingDictionary {
     toggleTheme: string;
     openMenu: string;
     closeMenu: string;
+    website: string;
   };
   hero: {
     badge: string;
@@ -158,6 +159,7 @@ export interface LandingDictionary {
     address: string;
     email: string;
     phone: string;
+    website: string;
   };
 }
 
@@ -170,11 +172,12 @@ const en: LandingDictionary = {
     analytics: "Analytics",
     contact: "Contact",
     signIn: "Sign In",
-    getStarted: "Get Started",
+    getStarted: "Contact us",
     language: "Language",
     toggleTheme: "Toggle theme",
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    website: "https://intel-sigma.vercel.app/contact",
   },
   hero: {
     badge: "The future of human resources",
@@ -354,6 +357,7 @@ const en: LandingDictionary = {
     address: "Casablanca, Morocco",
     email: "hello@intelligencehr.com",
     phone: "+212 5 00 00 00 00",
+    website: "https://intel-sigma.vercel.app/contact",
   },
 };
 
@@ -366,11 +370,12 @@ const fr: LandingDictionary = {
     analytics: "Analyses",
     contact: "Contact",
     signIn: "Connexion",
-    getStarted: "Commencer",
+    getStarted: "Contactez-nous",
     language: "Langue",
     toggleTheme: "Changer de thème",
     openMenu: "Ouvrir le menu",
     closeMenu: "Fermer le menu",
+    website: "https://intel-sigma.vercel.app/contact",
   },
   hero: {
     badge: "L'avenir des ressources humaines",
@@ -550,6 +555,7 @@ const fr: LandingDictionary = {
     address: "Casablanca, Maroc",
     email: "hello@intelligencehr.com",
     phone: "+212 5 00 00 00 00",
+    website: "https://intel-sigma.vercel.app/contact"
   },
 };
 
@@ -562,11 +568,12 @@ const ar: LandingDictionary = {
     analytics: "التحليلات",
     contact: "اتصل بنا",
     signIn: "تسجيل الدخول",
-    getStarted: "ابدأ الآن",
+    getStarted: "اتصل بنا",
     language: "اللغة",
     toggleTheme: "تبديل المظهر",
     openMenu: "فتح القائمة",
     closeMenu: "إغلاق القائمة",
+    website: "https://intel-sigma.vercel.app/contact"
   },
   hero: {
     badge: "مستقبل الموارد البشرية",
@@ -746,6 +753,7 @@ const ar: LandingDictionary = {
     address: "الدار البيضاء، المغرب",
     email: "hello@intelligencehr.com",
     phone: "+212 5 00 00 00 00",
+    website: "https://intel-sigma.vercel.app/contact",
   },
 };
 

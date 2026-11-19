@@ -1,0 +1,399 @@
+/* ==========================================================================
+   Automations page
+   Uses the HRMS tokens: --line, --surface-raised, --text, --muted, --blue
+   Optional status tokens: --green, --amber (fallbacks provided)
+   Logical properties throughout so the layout works in LTR and RTL.
+   ========================================================================== */
+
+.auto-page {
+    --auto-green: var(--green, #12b76a);
+    --auto-amber: var(--amber, #f79009);
+
+    display: grid;
+    gap: 20px;
+    max-width: 1200px;
+    margin-inline: auto;
+}
+
+/* Header ---------------------------------------------------------------- */
+.auto-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding-block-end: 16px;
+    border-block-end: 1px solid var(--line);
+}
+
+.auto-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.auto-title svg {
+    color: var(--blue);
+}
+
+.auto-subtitle {
+    max-inline-size: 62ch;
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.auto-create {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+}
+
+/* Cards ----------------------------------------------------------------- */
+.auto-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background-color: var(--surface-raised);
+    color: var(--text);
+}
+
+/* Stats ----------------------------------------------------------------- */
+.auto-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.auto-stat {
+    display: grid;
+    gap: 6px;
+    padding: 16px 18px;
+}
+
+.auto-stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.auto-stat-icon {
+    display: grid;
+    place-items: center;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: 9px;
+    color: var(--blue);
+    background-color: var(--surface-raised);
+    border: 1px solid var(--line);
+}
+
+.auto-stat-icon--green { color: var(--auto-green); }
+.auto-stat-icon--blue  { color: var(--blue); }
+
+.auto-stat-value {
+    margin: 0;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+}
+
+.auto-stat-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12.5px;
+}
+
+.auto-stat-note--positive {
+    color: var(--auto-green);
+}
+
+/* Workflow list --------------------------------------------------------- */
+.auto-list-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    padding: 16px 18px;
+    border-block-end: 1px solid var(--line);
+}
+
+.auto-list-title {
+    margin: 0;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.auto-count {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.auto-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 200px);
+    gap: 10px;
+    padding: 14px 18px;
+    border-block-end: 1px solid var(--line);
+}
+
+.auto-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.auto-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px 24px;
+    padding: 16px 18px;
+    transition: background-color 160ms ease;
+}
+
+.auto-row + .auto-row {
+    border-block-start: 1px solid var(--line);
+}
+
+.auto-row:hover {
+    background-color: var(--surface-raised);
+}
+
+.auto-row-main {
+    display: grid;
+    gap: 8px;
+    min-inline-size: 0;
+}
+
+.auto-row-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.auto-name {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Status pill */
+.auto-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.auto-status::before {
+    content: "";
+    inline-size: 6px;
+    block-size: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.auto-status--active { color: var(--auto-green); }
+.auto-status--paused { color: var(--auto-amber); }
+
+/* Trigger / action definitions */
+.auto-details {
+    display: grid;
+    gap: 4px 24px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.auto-details div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 6px;
+}
+
+.auto-details dt {
+    flex-shrink: 0;
+    color: var(--muted);
+}
+
+.auto-details dd {
+    margin: 0;
+    color: var(--text);
+}
+
+/* Run info and actions */
+.auto-row-side {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.auto-run {
+    display: grid;
+    gap: 2px;
+    text-align: end;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.auto-run span:first-child {
+    color: var(--muted);
+}
+
+.auto-run span:last-child {
+    color: var(--auto-green);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.auto-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.auto-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 36px;
+    block-size: 36px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background-color: transparent;
+    color: var(--text);
+    cursor: pointer;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition:
+        border-color 160ms ease,
+        background-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.auto-icon-btn:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+}
+
+.auto-icon-btn:focus-visible {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue);
+}
+
+/* Empty state */
+.auto-empty {
+    display: grid;
+    gap: 4px;
+    padding: 40px 18px;
+    text-align: center;
+}
+
+.auto-empty strong {
+    color: var(--text);
+    font-size: 15px;
+}
+
+.auto-empty span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* Tints where color-mix is available ------------------------------------ */
+@supports (color: color-mix(in srgb, red, blue)) {
+    .auto-row:hover {
+        background-color: color-mix(in srgb, var(--blue) 4%, var(--surface-raised));
+    }
+
+    .auto-status--active {
+        border-color: color-mix(in srgb, var(--auto-green) 35%, var(--line));
+        background-color: color-mix(in srgb, var(--auto-green) 10%, var(--surface-raised));
+    }
+
+    .auto-status--paused {
+        border-color: color-mix(in srgb, var(--auto-amber) 35%, var(--line));
+        background-color: color-mix(in srgb, var(--auto-amber) 10%, var(--surface-raised));
+    }
+
+    .auto-stat-icon {
+        background-color: color-mix(in srgb, currentColor 10%, var(--surface-raised));
+        border-color: color-mix(in srgb, currentColor 28%, var(--line));
+    }
+
+    .auto-icon-btn:hover {
+        background-color: color-mix(in srgb, var(--blue) 6%, transparent);
+    }
+
+    .auto-icon-btn:focus-visible {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent);
+    }
+}
+
+/* Responsive ------------------------------------------------------------ */
+@media (max-width: 860px) {
+    .auto-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .auto-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .auto-row-side {
+        justify-content: space-between;
+    }
+
+    .auto-run {
+        text-align: start;
+    }
+}
+
+@media (max-width: 560px) {
+    .auto-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (pointer: coarse) {
+    .auto-icon-btn {
+        inline-size: 44px;
+        block-size: 44px;
+    }
+}
+
+/* Respect reduced motion ------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+    .auto-row,
+    .auto-icon-btn {
+        transition: none;
+    }
+}

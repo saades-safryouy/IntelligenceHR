@@ -1,118 +1,199 @@
-import React from 'react';
-import { Bot, Send, Sparkles, Shield } from 'lucide-react';
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Bot, Send, ShieldCheck, Sparkles } from 'lucide-react'
+import './AskIntelligencePage.css'
+
+type Role = 'assistant' | 'user'
+
+interface ChatMessage {
+  id: number
+  role: Role
+  content: string
+  time: Date
+}
+
+const WELCOME_MESSAGE =
+  'Hello! I am your IntelligenceHR AI Assistant. How can I help you analyze workforce analytics, check leave policies, or generate employee insights today?'
+
+const SUGGESTED_PROMPTS = [
+  'What is our current engineering turnover rate?',
+  'Show pending leave approvals exceeding 3 days',
+  'Summarize Q3 department headcount growth',
+  'Explain remote work compliance guidelines',
+]
+
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+})
+
+// Placeholder reply. Replace with a call to your assistant API.
+function buildMockReply(query: string) {
+  return `I've analyzed your query regarding "${query}". Based on current active RBAC permissions and HR datasets, all compliance checks are verified. Is there anything specific about departmental headcounts or leave approval trends you would like to drill down into?`
+}
 
 export function AskIntelligencePage() {
-  const [messages, setMessages] = React.useState([
-    {
-      role: 'assistant',
-      content: 'Hello! I am your IntelligenceHR AI Assistant. How can I help you analyze workforce analytics, check leave policies, or generate employee insights today?',
-    },
-  ]);
-  const [input, setInput] = React.useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    { id: 0, role: 'assistant', content: WELCOME_MESSAGE, time: new Date() },
+  ])
+  const [input, setInput] = useState('')
+  const [isThinking, setIsThinking] = useState(false)
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    const userMsg = input.trim();
-    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
-    setInput('');
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `I've analyzed your query regarding "${userMsg}". Based on current active RBAC permissions and HR datasets, all compliance checks are verified. Is there anything specific about departmental headcounts or leave approval trends you would like to drill down into?`,
-        },
-      ]);
-    }, 800);
-  };
+  const nextId = useRef(1)
+  const logRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const replyTimer = useRef<number | null>(null)
+
+  // Keep the newest message in view
+  useEffect(() => {
+    const log = logRef.current
+    if (!log) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    log.scrollTo({ top: log.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [messages, isThinking])
+
+  // Clear any pending reply when leaving the page
+  useEffect(() => {
+    return () => {
+      if (replyTimer.current !== null) window.clearTimeout(replyTimer.current)
+    }
+  }, [])
+
+  const addMessage = (role: Role, content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: nextId.current++, role, content, time: new Date() },
+    ])
+  }
+
+  const handleSend = (e: FormEvent) => {
+    e.preventDefault()
+    const query = input.trim()
+    if (!query || isThinking) return
+
+    addMessage('user', query)
+    setInput('')
+    setIsThinking(true)
+
+    replyTimer.current = window.setTimeout(() => {
+      addMessage('assistant', buildMockReply(query))
+      setIsThinking(false)
+      replyTimer.current = null
+      inputRef.current?.focus()
+    }, 800)
+  }
+
+  const applyPrompt = (prompt: string) => {
+    setInput(prompt)
+    inputRef.current?.focus()
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="ask-page">
+      <header className="ask-header">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Bot className="w-7 h-7 text-indigo-400" />
+          <h1 className="ask-title">
+            <Bot size={26} aria-hidden="true" />
             Ask Intelligence
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Conversational workforce analytics and policy intelligence powered by secure LLM embeddings.
+          <p className="ask-subtitle">
+            Conversational workforce analytics and policy intelligence powered by secure LLM
+            embeddings.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-indigo-950/50 border border-indigo-800/60 px-3 py-1.5 rounded-lg text-xs text-indigo-300">
-          <Shield className="w-4 h-4 text-indigo-400" />
-          <span>RBAC & PII Masked</span>
-        </div>
-      </div>
+        <span className="ask-badge">
+          <ShieldCheck size={16} aria-hidden="true" />
+          RBAC and PII masking
+        </span>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Suggested Prompts
-            </h3>
-            <div className="space-y-2">
-              {[
-                'What is our current engineering turnover rate?',
-                'Show pending leave approvals exceeding 3 days',
-                'Summarize Q3 department headcount growth',
-                'Explain remote work compliance guidelines',
-              ].map((prompt, i) => (
+      <div className="ask-layout">
+        <aside className="ask-card ask-prompts" aria-labelledby="ask-prompts-title">
+          <h2 id="ask-prompts-title">
+            <Sparkles size={16} aria-hidden="true" />
+            Suggested prompts
+          </h2>
+          <ul className="ask-prompt-list">
+            {SUGGESTED_PROMPTS.map((prompt) => (
+              <li key={prompt}>
                 <button
-                  key={i}
-                  onClick={() => setInput(prompt)}
-                  className="w-full text-left text-xs bg-slate-800/60 hover:bg-slate-800 text-slate-300 p-2.5 rounded-lg border border-slate-700/50 transition-colors"
+                  type="button"
+                  className="ask-prompt"
+                  onClick={() => applyPrompt(prompt)}
+                  disabled={isThinking}
                 >
                   {prompt}
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-        <div className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-[600px]">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+        <section className="ask-card ask-chat" aria-label="Conversation">
+          <div
+            ref={logRef}
+            className="ask-log"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+          >
+            {messages.map((m) => (
+              <div key={m.id} className={`ask-message ask-message--${m.role}`}>
                 {m.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-indigo-400" />
+                  <div className="ask-avatar" aria-hidden="true">
+                    <Bot size={16} />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] rounded-xl p-4 text-sm leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-200 border border-slate-700/60'
-                  }`}
-                >
-                  {m.content}
+                <div className="ask-bubble-wrap">
+                  <p className="ask-bubble">
+                    <span className="ask-sr">
+                      {m.role === 'assistant' ? 'Assistant: ' : 'You: '}
+                    </span>
+                    {m.content}
+                  </p>
+                  <time className="ask-time" dateTime={m.time.toISOString()}>
+                    {timeFormatter.format(m.time)}
+                  </time>
                 </div>
               </div>
             ))}
+
+            {isThinking && (
+              <div className="ask-message ask-message--assistant">
+                <div className="ask-avatar" aria-hidden="true">
+                  <Bot size={16} />
+                </div>
+                <div className="ask-typing" role="status">
+                  <span className="ask-sr">Assistant is typing</span>
+                  <span aria-hidden="true" />
+                  <span aria-hidden="true" />
+                  <span aria-hidden="true" />
+                </div>
+              </div>
+            )}
           </div>
 
-          <form onSubmit={handleSend} className="p-4 border-t border-slate-800 flex gap-2">
+          <form className="ask-composer" onSubmit={handleSend}>
             <input
+              ref={inputRef}
               type="text"
+              className="table-search"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything about employees, policies, or analytics..."
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              aria-label="Message"
+              autoComplete="off"
             />
             <button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              className="button primary ask-send"
+              disabled={!input.trim() || isThinking}
             >
-              <Send className="w-4 h-4" /> Send
+              <Send size={16} aria-hidden="true" />
+              <span>Send</span>
             </button>
           </form>
-        </div>
+        </section>
       </div>
     </div>
-  );
+  )
 }
-

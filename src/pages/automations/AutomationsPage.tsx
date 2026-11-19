@@ -1,130 +1,253 @@
-import { Cpu, Plus, CheckCircle2, Clock, Settings2, RefreshCw } from 'lucide-react';
+import { useMemo, useState } from 'react'
+import {
+  Cpu,
+  Plus,
+  CheckCircle2,
+  Clock,
+  Settings2,
+  RefreshCw,
+  TrendingUp,
+  Pause,
+  Play,
+} from 'lucide-react'
+import './AutomationsPage.css'
+
+type WorkflowStatus = 'Active' | 'Paused'
+type StatusFilter = 'all' | WorkflowStatus
+
+interface Workflow {
+  id: string
+  name: string
+  trigger: string
+  action: string
+  status: WorkflowStatus
+  lastRun: string
+  successRate: string
+}
+
+const INITIAL_WORKFLOWS: Workflow[] = [
+  {
+    id: 'wf-1',
+    name: 'New Hire Provisioning & IT Checklist',
+    trigger: 'Employee Onboarding Created',
+    action: 'Generate Google Workspace, Slack & Jira Accounts',
+    status: 'Active',
+    lastRun: '12 mins ago',
+    successRate: '99.4%',
+  },
+  {
+    id: 'wf-2',
+    name: 'Probation Review Reminder',
+    trigger: 'Day 85 of Employment',
+    action: 'Send Manager Evaluation Form & Slack Alert',
+    status: 'Active',
+    lastRun: '3 hours ago',
+    successRate: '100%',
+  },
+  {
+    id: 'wf-3',
+    name: 'Leave Balance Year-End Rollover',
+    trigger: 'December 31st at Midnight',
+    action: 'Calculate carry-over & reset sick leave accruals',
+    status: 'Paused',
+    lastRun: '10 months ago',
+    successRate: '98.1%',
+  },
+  {
+    id: 'wf-4',
+    name: 'Offboarding Security Off-ramp',
+    trigger: 'Offboarding Request Approved',
+    action: 'Revoke VPN access, disable Badge & archive email',
+    status: 'Active',
+    lastRun: '1 day ago',
+    successRate: '100%',
+  },
+]
 
 export function AutomationsPage() {
-  const workflows = [
-    {
-      id: 'wf-1',
-      name: 'New Hire Provisioning & IT Checklist',
-      trigger: 'Employee Onboarding Created',
-      action: 'Generate Google Workspace, Slack & Jira Accounts',
-      status: 'Active',
-      lastRun: '12 mins ago',
-      successRate: '99.4%',
-    },
-    {
-      id: 'wf-2',
-      name: 'Probation Review Reminder',
-      trigger: 'Day 85 of Employment',
-      action: 'Send Manager Evaluation Form & Slack Alert',
-      status: 'Active',
-      lastRun: '3 hours ago',
-      successRate: '100%',
-    },
-    {
-      id: 'wf-3',
-      name: 'Leave Balance Year-End Rollover',
-      trigger: 'December 31st at Midnight',
-      action: 'Calculate carry-over & reset sick leave accruals',
-      status: 'Paused',
-      lastRun: '10 months ago',
-      successRate: '98.1%',
-    },
-    {
-      id: 'wf-4',
-      name: 'Offboarding Security Off-ramp',
-      trigger: 'Offboarding Request Approved',
-      action: 'Revoke VPN access, disable Badge & archive email',
-      status: 'Active',
-      lastRun: '1 day ago',
-      successRate: '100%',
-    },
-  ];
+  const [workflows, setWorkflows] = useState<Workflow[]>(INITIAL_WORKFLOWS)
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+
+  const activeCount = workflows.filter((wf) => wf.status === 'Active').length
+
+  const visibleWorkflows = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return workflows.filter((wf) => {
+      if (statusFilter !== 'all' && wf.status !== statusFilter) return false
+      if (!needle) return true
+      return [wf.name, wf.trigger, wf.action].some((field) =>
+        field.toLowerCase().includes(needle),
+      )
+    })
+  }, [workflows, query, statusFilter])
+
+  const toggleStatus = (id: string) => {
+    setWorkflows((prev) =>
+      prev.map((wf) =>
+        wf.id === id
+          ? { ...wf, status: wf.status === 'Active' ? 'Paused' : 'Active' }
+          : wf,
+      ),
+    )
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="auto-page">
+      <header className="auto-header">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <Cpu className="w-7 h-7 text-indigo-400" />
+          <h1 className="auto-title">
+            <Cpu size={26} aria-hidden="true" />
             Automations Center
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="auto-subtitle">
             Build, monitor, and configure event-driven and scheduled enterprise HR workflows.
           </p>
         </div>
-        <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-          <Plus className="w-4 h-4" /> Create Workflow
+        <button type="button" className="button primary auto-create">
+          <Plus size={16} aria-hidden="true" />
+          Create workflow
         </button>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider">
-            <span>Active Workflows</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+      <ul className="auto-stats" aria-label="Automation summary">
+        <li className="auto-card auto-stat">
+          <div className="auto-stat-head">
+            <span>Active workflows</span>
+            <span className="auto-stat-icon auto-stat-icon--green" aria-hidden="true">
+              <CheckCircle2 size={16} />
+            </span>
           </div>
-          <div className="text-2xl font-bold text-slate-100 mt-2">3</div>
-          <p className="text-xs text-slate-500 mt-1">Operational across 4 departments</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider">
-            <span>Total Executions (30d)</span>
-            <RefreshCw className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div className="text-2xl font-bold text-slate-100 mt-2">1,428</div>
-          <p className="text-xs text-emerald-400 mt-1">↑ 12% increase from last month</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium uppercase tracking-wider">
-            <span>Execution Success Rate</span>
-            <Clock className="w-4 h-4 text-sky-400" />
-          </div>
-          <div className="text-2xl font-bold text-slate-100 mt-2">99.4%</div>
-          <p className="text-xs text-slate-500 mt-1">0 critical failures reported</p>
-        </div>
-      </div>
+          <p className="auto-stat-value">{activeCount}</p>
+          <p className="auto-stat-note">Operational across 4 departments</p>
+        </li>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-200">Configured Workflows</h3>
-          <span className="text-xs text-slate-400">Showing {workflows.length} workflows</span>
+        <li className="auto-card auto-stat">
+          <div className="auto-stat-head">
+            <span>Executions in the last 30 days</span>
+            <span className="auto-stat-icon auto-stat-icon--blue" aria-hidden="true">
+              <RefreshCw size={16} />
+            </span>
+          </div>
+          <p className="auto-stat-value">1,428</p>
+          <p className="auto-stat-note auto-stat-note--positive">
+            <TrendingUp size={14} aria-hidden="true" />
+            12% more than last month
+          </p>
+        </li>
+
+        <li className="auto-card auto-stat">
+          <div className="auto-stat-head">
+            <span>Execution success rate</span>
+            <span className="auto-stat-icon auto-stat-icon--blue" aria-hidden="true">
+              <Clock size={16} />
+            </span>
+          </div>
+          <p className="auto-stat-value">99.4%</p>
+          <p className="auto-stat-note">No critical failures reported</p>
+        </li>
+      </ul>
+
+      <section className="auto-card" aria-labelledby="auto-list-title">
+        <div className="auto-list-head">
+          <h2 id="auto-list-title" className="auto-list-title">
+            Configured workflows
+          </h2>
+          <span className="auto-count" aria-live="polite">
+            Showing {visibleWorkflows.length} of {workflows.length} workflows
+          </span>
         </div>
-        <div className="divide-y divide-slate-800">
-          {workflows.map((wf) => (
-            <div key={wf.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-800/40 transition-colors">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-slate-100">{wf.name}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      wf.status === 'Active'
-                        ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50'
-                        : 'bg-amber-950/60 text-amber-400 border border-amber-800/50'
-                    }`}
-                  >
-                    {wf.status}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
-                  <span>Trigger: <strong className="text-slate-300">{wf.trigger}</strong></span>
-                  <span>Action: <strong className="text-slate-300">{wf.action}</strong></span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <div className="text-right text-xs">
-                  <div className="text-slate-400">Last run: {wf.lastRun}</div>
-                  <div className="text-emerald-400 font-medium">Success: {wf.successRate}</div>
-                </div>
-                <button className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors" title="Settings">
-                  <Settings2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+
+        <div className="auto-toolbar">
+          <input
+            type="search"
+            className="table-search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name, trigger, or action..."
+            aria-label="Search workflows"
+          />
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            aria-label="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Paused">Paused</option>
+          </select>
         </div>
-      </div>
+
+        {visibleWorkflows.length === 0 ? (
+          <div className="auto-empty">
+            <strong>No workflows match your filters</strong>
+            <span>Try a different search term or reset the status filter.</span>
+          </div>
+        ) : (
+          <ul className="auto-rows">
+            {visibleWorkflows.map((wf) => {
+              const isActive = wf.status === 'Active'
+              return (
+                <li key={wf.id} className="auto-row">
+                  <div className="auto-row-main">
+                    <div className="auto-row-title">
+                      <span className="auto-name">{wf.name}</span>
+                      <span
+                        className={`auto-status ${
+                          isActive ? 'auto-status--active' : 'auto-status--paused'
+                        }`}
+                      >
+                        {wf.status}
+                      </span>
+                    </div>
+                    <dl className="auto-details">
+                      <div>
+                        <dt>Trigger:</dt>
+                        <dd>{wf.trigger}</dd>
+                      </div>
+                      <div>
+                        <dt>Action:</dt>
+                        <dd>{wf.action}</dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div className="auto-row-side">
+                    <div className="auto-run">
+                      <span>Last run {wf.lastRun}</span>
+                      <span>{wf.successRate} success</span>
+                    </div>
+                    <div className="auto-actions">
+                      <button
+                        type="button"
+                        className="auto-icon-btn"
+                        onClick={() => toggleStatus(wf.id)}
+                        aria-label={`${isActive ? 'Pause' : 'Resume'} ${wf.name}`}
+                        title={isActive ? 'Pause' : 'Resume'}
+                      >
+                        {isActive ? (
+                          <Pause size={16} aria-hidden="true" />
+                        ) : (
+                          <Play size={16} aria-hidden="true" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="auto-icon-btn"
+                        aria-label={`Configure ${wf.name}`}
+                        title="Settings"
+                      >
+                        <Settings2 size={16} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
     </div>
-  );
+  )
 }
-
-

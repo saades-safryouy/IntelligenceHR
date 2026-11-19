@@ -1,0 +1,153 @@
+.reports-page{display:grid;gap:18px}.reports-toolbar{display:flex;justify-content:space-between;align-items:end;gap:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:11px}.reports-date-filter{display:flex;gap:10px}.reports-date-filter label{display:grid;gap:5px;color:var(--muted);font-size:10px}.reports-date-filter input{height:34px;padding:0 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface-raised);color:var(--text)}.reports-scope-note{font-size:11px}.reports-tabs{display:flex;flex-wrap:wrap;gap:7px;border-bottom:1px solid var(--line);padding-bottom:3px}.reports-tabs button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-raised);color:var(--muted);font-size:11px;cursor:pointer}.reports-tabs button.active{background:rgba(76,154,255,.14);border-color:var(--blue);color:var(--blue);font-weight:700}.reports-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.reports-kpi{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}.reports-kpi-icon{grid-row:span 3;width:36px;height:36px;display:grid;place-items:center;border-radius:9px;background:rgba(76,154,255,.12);color:var(--blue)}.reports-kpi span:not(.reports-kpi-icon){font-size:10px;color:var(--muted);text-transform:uppercase}.reports-kpi strong{font:600 21px 'Space Grotesk',sans-serif;color:var(--text)}.reports-kpi small{font-size:10px;color:var(--muted-2)}.reports-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.reports-panel{padding:19px;background:var(--surface);border:1px solid var(--line);border-radius:14px}.reports-panel h2{margin:0 0 14px;font:600 16px 'Space Grotesk',sans-serif;color:var(--text)}.reports-distribution-row{display:grid;gap:6px;margin:13px 0}.reports-distribution-row>div:first-child{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.reports-distribution-row strong{color:var(--text)}.reports-bar{height:7px;background:var(--line);border-radius:5px;overflow:hidden}.reports-bar span{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--mint))}.reports-highlight{display:flex;align-items:center;gap:14px;padding:20px;background:var(--surface-raised);border-radius:10px}.reports-highlight strong{font:600 32px 'Space Grotesk';color:var(--blue)}.reports-highlight span,.reports-definition,.reports-empty{color:var(--muted);font-size:12px}.reports-unavailable{display:flex;align-items:center;gap:10px;padding:16px;border:1px solid rgba(255,191,105,.35);border-radius:9px;background:rgba(255,191,105,.07);color:var(--orange);font-size:12px}.reports-state{text-align:center;padding:60px;color:var(--muted)}.reports-state.error{color:var(--red)}@media(max-width:800px){.reports-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.reports-toolbar{align-items:stretch;flex-direction:column}.reports-date-filter{flex-wrap:wrap}}@media(max-width:560px){.reports-kpi-grid,.reports-grid{grid-template-columns:1fr}.reports-date-filter{flex-direction:column}}
+
+/* ==========================================================================
+   Reports page additions
+   Works alongside your existing .report-grid, .report-card, .panel,
+   .donut-chart and .legend-dot rules. New classes use "report-kpi-" and
+   "report-dept-" prefixes. Tokens: --line, --surface-raised, --text,
+   --muted, --blue. Logical properties keep it correct in RTL.
+   ========================================================================== */
+
+/* KPI strip ------------------------------------------------------------- */
+.report-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.report-kpi {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    min-inline-size: 0;
+}
+
+.report-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.report-kpi-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 30px;
+    block-size: 30px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background-color: var(--surface-raised);
+    color: var(--blue);
+}
+
+.report-kpi-value {
+    margin: 0;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.report-kpi-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+/* Department distribution ----------------------------------------------- */
+.report-dept-list {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.report-dept-row {
+    display: grid;
+    gap: 6px;
+}
+
+.report-dept-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.report-dept-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-inline-size: 0;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.report-dept-meta {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.report-dept-track {
+    block-size: 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background-color: var(--surface-raised);
+    overflow: hidden;
+}
+
+.report-dept-track > span {
+    display: block;
+    block-size: 100%;
+    border-radius: 999px;
+    transition: inline-size 240ms ease;
+}
+
+.report-donut-wrap {
+    display: grid;
+    gap: 20px;
+}
+
+/* Tints where color-mix is available ------------------------------------ */
+@supports (color: color-mix(in srgb, red, blue)) {
+    .report-kpi-icon {
+        border-color: color-mix(in srgb, var(--blue) 28%, var(--line));
+        background-color: color-mix(in srgb, var(--blue) 10%, var(--surface-raised));
+    }
+
+    .report-dept-track {
+        background-color: color-mix(in srgb, var(--text) 4%, var(--surface-raised));
+    }
+}
+
+/* Responsive ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+    .report-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .report-kpis {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .report-dept-track > span {
+        transition: none;
+    }
+}

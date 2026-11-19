@@ -28,6 +28,8 @@ export interface Employee {
   lastName: string
   jobTitle: string
   department: string
+  team?: string
+  positionTitle?: string
   manager: string
   employmentType: EmploymentType | null
   status: EmployeeStatus
@@ -53,6 +55,21 @@ export interface Employee {
   emergencyContactName: string | null
   emergencyContactPhone: string | null
   emergencyContactRelationship: string | null
+  onboardingStatus?: string | null
+  onboardingApprovalStatus?: string | null
+  offboardingStatus?: string | null
+  offboardingApprovalStatus?: string | null
+  documentStatusCounts?: {
+    total: number
+    missing: number
+    pending: number
+    approved: number
+    rejected: number
+    archived: number
+    expired: number
+  } | null
+  createdAt?: string | null
+  updatedAt?: string | null
 }
 
 export type OnboardingStage = 'HR Validation' | 'Manager Approval' | 'Local IT' | 'ISD' | 'Completed'
@@ -95,11 +112,13 @@ export interface OnboardingRequest {
   assignee: string
   progress: number
   status: RequestStatus
+  approvalStatus?: string | null
   employeeTasks: OnboardingTask[]
 }
 
 export interface OffboardingRequest {
   id: string
+  userId?: number | null
   employee: string
   exitDate: string
   reason: string
@@ -107,10 +126,12 @@ export interface OffboardingRequest {
   stage: string
   progress: number
   status: RequestStatus
+  approvalStatus?: string | null
 }
 
 export interface LeaveType {
   id: string
+  code?: string
   nameKey: string
   color: string
   paid: boolean
@@ -138,6 +159,24 @@ export interface LeaveRequest {
   note: string
   status: LeaveStatus
   submittedAt: string
+}
+
+export interface EmployeeDocumentRecord {
+  id: string
+  employeeId: string
+  employee: string
+  name: string
+  type: string
+  uploadedAt: string
+  issueDate?: string | null
+  expiryDate?: string | null
+  status: string
+  hasFile?: boolean
+  mimeType?: string | null
+  fileSize?: number | null
+  reviewComment?: string | null
+  reviewedAt?: string | null
+  workflowInstance?: { id: string; status: string } | null
 }
 
 export interface Holiday {
