@@ -18,7 +18,11 @@ import { isApiDataMode } from '../../lib/apiClient'
 import { listVisibleWorkflows } from '../../data/managerDashboardRepository'
 import type { WorkflowInstance } from '../../data/apiWorkflowRepository'
 import { managerTranslations } from './translations'
+import { ManagerApiNotice } from './ManagerDashboardPage'
 import './ManagerDashboard.css'
+
+type ScopeFilter = 'all' | 'assigned' | 'mine'
+type ModuleFilter = 'all' | 'leave' | 'onboarding' | 'offboarding'
 
 export function ManagerWorkflowsPage() {
   const { hasPermission } = useAuth()
@@ -33,8 +37,8 @@ export function ManagerWorkflowsPage() {
   const [workflows, setWorkflows] = useState<WorkflowInstance[]>([])
   const [loading, setLoading] = useState(isApiDataMode && canViewWorkflows)
   const [error, setError] = useState('')
-  const [scopeFilter, setScopeFilter] = useState<'all' | 'assigned' | 'mine'>('all')
-  const [moduleFilter, setModuleFilter] = useState<'all' | 'leave' | 'onboarding' | 'offboarding'>('all')
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all')
+  const [moduleFilter, setModuleFilter] = useState<ModuleFilter>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | string>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -63,8 +67,8 @@ export function ManagerWorkflowsPage() {
   }, [loadWorkflows])
 
   const filteredWorkflows = useMemo(() => {
-    if (!searchTerm.trim()) return workflows
     const term = searchTerm.trim().toLowerCase()
+    if (!term) return workflows
     return workflows.filter((w) => {
       const res = (w.resource_type || '').toLowerCase()
       const status = (w.status || '').toLowerCase()
@@ -84,15 +88,17 @@ export function ManagerWorkflowsPage() {
 
   if (!canViewWorkflows) {
     return (
-      <div className="manager-page">
+      <div className="page manager-page">
         <PageHeader eyebrow={copy.portal} title={copy.workflowsManagement} subtitle={copy.workflowsManagementSubtitle} />
-        <div className="manager-error-banner">{copy.noTeamAccess}</div>
+        <div className="manager-error-banner" role="alert">{copy.noTeamAccess}</div>
       </div>
     )
   }
 
+  if (!isApiDataMode) return <ManagerApiNotice message={copy.apiRequired} />
+
   return (
-    <div className="manager-page">
+    <div className="page manager-page">
       <Breadcrumb
         items={[
           { label: copy.portal, path: '/manager/dashboard' },
@@ -107,13 +113,13 @@ export function ManagerWorkflowsPage() {
       />
 
       <div className="manager-notice-banner">
-        <Info size={16} />
+        <Info size={16} aria-hidden="true" />
         <span>{copy.approvalDescription}</span>
       </div>
 
       <div className="manager-kpi-grid">
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon blue">
+          <div className="manager-kpi-icon blue" aria-hidden="true">
             <GitBranch size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -123,7 +129,7 @@ export function ManagerWorkflowsPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon orange">
+          <div className="manager-kpi-icon orange" aria-hidden="true">
             <Clock size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -133,7 +139,7 @@ export function ManagerWorkflowsPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon mint">
+          <div className="manager-kpi-icon mint" aria-hidden="true">
             <CheckCircle2 size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -143,31 +149,37 @@ export function ManagerWorkflowsPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon purple">
+          <div className="manager-kpi-icon purple" aria-hidden="true">
             <AlertCircle size={20} />
           </div>
           <div className="manager-kpi-meta">
-            <span className="manager-kpi-label">{copy.returned} / {copy.rejected}</span>
+            <span className="manager-kpi-label">
+              {copy.returned} / {copy.rejected}
+            </span>
             <strong className="manager-kpi-value">{stats.returned}</strong>
           </div>
         </div>
+      </div>
+
       <section className="manager-section">
         <div className="manager-filter-bar">
           <div className="manager-search-box">
-            <Search size={16} />
+            <Search size={16} aria-hidden="true" />
             <input
-              type="text"
+              type="search"
+              aria-label={copy.searchTeam}
               placeholder={copy.searchTeam}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="manager-status-pills">
+          <div className="manager-status-pills" role="group" aria-label={copy.workflows}>
             {(['all', 'assigned', 'mine'] as const).map((sc) => (
               <button
                 key={sc}
                 type="button"
+                aria-pressed={scopeFilter === sc}
                 className={`manager-filter-pill ${scopeFilter === sc ? 'active' : ''}`}
                 onClick={() => setScopeFilter(sc)}
               >
@@ -180,11 +192,12 @@ export function ManagerWorkflowsPage() {
             ))}
           </div>
 
-          <div className="manager-status-pills">
+          <div className="manager-status-pills" role="group" aria-label={copy.module}>
             {(['all', 'leave', 'onboarding', 'offboarding'] as const).map((mod) => (
               <button
                 key={mod}
                 type="button"
+                aria-pressed={moduleFilter === mod}
                 className={`manager-filter-pill ${moduleFilter === mod ? 'active' : ''}`}
                 onClick={() => setModuleFilter(mod)}
               >
@@ -198,12 +211,13 @@ export function ManagerWorkflowsPage() {
               </button>
             ))}
           </div>
-        </div>
-          <div className="manager-status-pills">
+
+          <div className="manager-status-pills" role="group" aria-label={copy.status}>
             {(['all', 'pending_approval', 'approved', 'rejected'] as const).map((st) => (
               <button
                 key={st}
                 type="button"
+                aria-pressed={statusFilter === st}
                 className={`manager-filter-pill ${statusFilter === st ? 'active' : ''}`}
                 onClick={() => setStatusFilter(st)}
               >
@@ -217,11 +231,12 @@ export function ManagerWorkflowsPage() {
               </button>
             ))}
           </div>
+        </div>
 
         {loading ? (
-          <div className="manager-loading-state">{copy.loading}</div>
+          <div className="manager-loading-state" role="status">{copy.loading}</div>
         ) : error ? (
-          <div className="manager-error-banner">
+          <div className="manager-error-banner" role="alert">
             <span>{error}</span>
             <button type="button" onClick={() => void loadWorkflows()}>
               {copy.retry}
@@ -229,7 +244,7 @@ export function ManagerWorkflowsPage() {
           </div>
         ) : filteredWorkflows.length === 0 ? (
           <div className="manager-empty-state">
-            <GitBranch size={32} />
+            <GitBranch size={32} aria-hidden="true" />
             <p>{copy.noWorkflows}</p>
           </div>
         ) : (
@@ -246,27 +261,27 @@ export function ManagerWorkflowsPage() {
               </thead>
               <tbody>
                 {filteredWorkflows.map((w) => {
-                  const modName = (w.resource_type || '').replace('_case', '').replace('_request', '')
+                  const modName = (w.resource_type || '')
+                    .replace('_case', '')
+                    .replace('_request', '')
                   const isPending = w.status === 'pending_approval'
 
                   return (
                     <tr key={w.id}>
                       <td>
-                        <div>
-                          <strong>{w.resource_type ? w.resource_type.replaceAll('_', ' ') : copy.request}</strong>
-                          <small className="manager-card-sub" style={{ display: 'block' }}>
-                            ID: {w.resource_id ? `${w.resource_id.slice(0, 13)}…` : w.id.slice(0, 13)}
-                          </small>
-                        </div>
+                        <strong>
+                          {w.resource_type ? w.resource_type.replaceAll('_', ' ') : copy.request}
+                        </strong>
+                        <small className="manager-card-sub">
+                          ID: {w.resource_id ? `${w.resource_id.slice(0, 13)}…` : w.id.slice(0, 13)}
+                        </small>
                       </td>
                       <td>
-                        <span className="manager-type-badge">
-                          {modName || copy.module}
-                        </span>
+                        <span className="manager-type-badge">{modName || copy.module}</span>
                       </td>
                       <td>
                         <div className="manager-cell-dates">
-                          <Calendar size={14} />
+                          <Calendar size={14} aria-hidden="true" />
                           <span>{w.submitted_at ? w.submitted_at.slice(0, 10) : '—'}</span>
                         </div>
                       </td>
@@ -278,18 +293,12 @@ export function ManagerWorkflowsPage() {
                       <td>
                         <div className="manager-row-actions">
                           {isPending && canApprove ? (
-                            <Link
-                              to={`/manager/workflows/${w.id}`}
-                              className="button primary compact"
-                            >
+                            <Link to={`/manager/workflows/${w.id}`} className="button primary compact">
                               <span>{copy.decideNow}</span>
-                              <ExternalLink size={14} />
+                              <ExternalLink size={14} aria-hidden="true" />
                             </Link>
                           ) : (
-                            <Link
-                              to={`/manager/workflows/${w.id}`}
-                              className="button secondary compact"
-                            >
+                            <Link to={`/manager/workflows/${w.id}`} className="button secondary compact">
                               <span>{copy.viewDetails}</span>
                             </Link>
                           )}
@@ -303,7 +312,6 @@ export function ManagerWorkflowsPage() {
           </div>
         )}
       </section>
-      </div>
     </div>
   )
 }

@@ -19,6 +19,7 @@ import {
 export type NavItem = {
   to: string
   label: string
+  searchLabel?: string
   icon: typeof LayoutDashboard
   badge?: string
   permissions?: string[]
@@ -60,7 +61,6 @@ export const navItems: NavItem[] = [
     to: '/app/workflows',
     label: 'workflows',
     icon: Workflow,
-    permissions: ['workflow.instance.view', 'workflow.instance.view.all', 'workflow.instance.start', 'workflow.approve', 'workflow.history.view', 'workflow.template.view', 'workflow.delegate'],
   },
   {
     to: '/app/holidays',

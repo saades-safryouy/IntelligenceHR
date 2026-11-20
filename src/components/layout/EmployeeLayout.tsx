@@ -13,7 +13,6 @@ import {
   MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
   Sun,
   User,
   Workflow,
@@ -26,6 +25,7 @@ import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 import { EmployeeNotificationPanel } from '../notifications/EmployeeNotificationPanel'
 import { employeeDashboardTranslations } from '../../pages/employee/translations'
+import { GlobalSearch } from './GlobalSearch'
 import { getUnreadCount, resolveEmployee } from '../../data/employeeStore'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import { apiRequest, isApiDataMode } from '../../lib/apiClient'
@@ -68,16 +68,16 @@ export function EmployeeLayout({
   }, [])
 
   const navItems = [
-    { label: t.navDashboard, path: '/employee/dashboard', icon: LayoutDashboard },
-    { label: t.navProfile, path: '/employee/profile', icon: User },
-    { label: t.navLeave, path: '/employee/leave', icon: CalendarDays },
-    { label: t.navHolidays, path: '/employee/holidays', icon: CalendarDays },
-    { label: t.navOnboarding, path: '/employee/onboarding', icon: ClipboardCheck },
-    { label: t.navOffboarding, path: '/employee/offboarding', icon: User },
-    { label: t.navNotifications, path: '/employee/notifications', icon: Bell },
-    { label: t.navOrganigram, path: '/employee/organigram', icon: Network },
-    { label: t.navWorkflows, path: '/employee/workflows', icon: Workflow },
-    { label: t.navDocuments, path: '/employee/documents', icon: FolderOpen },
+    { label: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard },
+    { label: 'My Profile', path: '/employee/profile', icon: User },
+    { label: 'Leave', path: '/employee/leave', icon: CalendarDays },
+    { label: 'Holidays', path: '/employee/holidays', icon: CalendarDays },
+    { label: 'Onboarding', path: '/employee/onboarding', icon: ClipboardCheck },
+    { label: 'Offboarding', path: '/employee/offboarding', icon: User },
+    { label: 'Notifications', path: '/employee/notifications', icon: Bell },
+    { label: 'Organization', path: '/employee/organigram', icon: Network },
+    { label: 'Workflows', path: '/employee/workflows', icon: Workflow },
+    { label: 'Documents', path: '/employee/documents', icon: FolderOpen },
   ]
 
   const handleLogout = () => {
@@ -89,7 +89,7 @@ export function EmployeeLayout({
     <div className="app-frame">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="brand-wrap">
-          <Brand compact={collapsed} theme={theme} />
+          <Brand compact={collapsed} theme={theme} darkSurface />
           <button
             className="icon-button sidebar-close"
             onClick={() => setMobileOpen(false)}
@@ -164,11 +164,12 @@ export function EmployeeLayout({
             {collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
           </button>
 
-          <div className="global-search">
-            <Search size={17} />
-            <input placeholder={t.search} aria-label={t.search} />
-            <kbd>⌘ K</kbd>
-          </div>
+          <GlobalSearch
+            placeholder={t.search}
+            modules={navItems.map(({ label, path }) => ({ label, to: path }))}
+            employeeTo="/employee/profile"
+            onNavigate={navigate}
+          />
 
           <div className="top-actions">
             <LanguageSwitch language={language} onChange={onLanguageChange} />

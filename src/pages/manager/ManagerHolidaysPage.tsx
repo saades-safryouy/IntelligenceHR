@@ -15,6 +15,7 @@ import { isApiDataMode } from '../../lib/apiClient'
 import { listVisibleHolidays } from '../../data/managerDashboardRepository'
 import type { Holiday } from '../../types/models'
 import { managerTranslations } from './translations'
+import { ManagerApiNotice } from './ManagerDashboardPage'
 import './ManagerDashboard.css'
 
 export function ManagerHolidaysPage() {
@@ -28,19 +29,22 @@ export function ManagerHolidaysPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const loadHolidays = useCallback(async (year: number) => {
-    if (!isApiDataMode) return
-    setLoading(true)
-    setError('')
-    try {
-      const data = await listVisibleHolidays(year)
-      setHolidays(data)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : copy.loadError)
-    } finally {
-      setLoading(false)
-    }
-  }, [copy.loadError])
+  const loadHolidays = useCallback(
+    async (year: number) => {
+      if (!isApiDataMode) return
+      setLoading(true)
+      setError('')
+      try {
+        const data = await listVisibleHolidays(year)
+        setHolidays(data)
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : copy.loadError)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [copy.loadError],
+  )
 
   useEffect(() => {
     void loadHolidays(selectedYear)
@@ -70,8 +74,10 @@ export function ManagerHolidaysPage() {
     return holidays.filter((h) => h.type === 'Public' || !h.type).length
   }, [holidays])
 
+  if (!isApiDataMode) return <ManagerApiNotice message={copy.apiRequired} />
+
   return (
-    <div className="manager-page">
+    <div className="page manager-page">
       <Breadcrumb
         items={[
           { label: copy.portal, path: '/manager/dashboard' },
@@ -86,23 +92,25 @@ export function ManagerHolidaysPage() {
       />
 
       <div className="manager-notice-banner">
-        <Info size={16} />
+        <Info size={16} aria-hidden="true" />
         <span>{copy.readOnlyNotice}</span>
       </div>
 
       <div className="manager-kpi-grid">
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon blue">
+          <div className="manager-kpi-icon blue" aria-hidden="true">
             <Sun size={20} />
           </div>
           <div className="manager-kpi-meta">
-            <span className="manager-kpi-label">{copy.year} {selectedYear}</span>
+            <span className="manager-kpi-label">
+              {copy.year} {selectedYear}
+            </span>
             <strong className="manager-kpi-value">{holidays.length}</strong>
           </div>
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon orange">
+          <div className="manager-kpi-icon orange" aria-hidden="true">
             <Calendar size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -112,25 +120,37 @@ export function ManagerHolidaysPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon mint">
+          <div className="manager-kpi-icon mint" aria-hidden="true">
             <Sparkles size={20} />
+          </div>
+          <div className="manager-kpi-meta">
+            <span className="manager-kpi-label">{copy.today}</span>
+            <strong className="manager-kpi-value" title={nextUpcoming?.name}>
+              {nextUpcoming ? nextUpcoming.name : '—'}
+            </strong>
+          </div>
+        </div>
+      </div>
+
       <section className="manager-section">
         <div className="manager-filter-bar">
           <div className="manager-search-box">
-            <Search size={16} />
+            <Search size={16} aria-hidden="true" />
             <input
-              type="text"
+              type="search"
+              aria-label={copy.searchTeam}
               placeholder={copy.searchTeam}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="manager-status-pills">
+          <div className="manager-status-pills" role="group" aria-label={copy.year}>
             {[currentYear - 1, currentYear, currentYear + 1].map((yr) => (
               <button
                 key={yr}
                 type="button"
+                aria-pressed={selectedYear === yr}
                 className={`manager-filter-pill ${selectedYear === yr ? 'active' : ''}`}
                 onClick={() => setSelectedYear(yr)}
               >
@@ -141,9 +161,9 @@ export function ManagerHolidaysPage() {
         </div>
 
         {loading ? (
-          <div className="manager-loading-state">{copy.loading}</div>
+          <div className="manager-loading-state" role="status">{copy.loading}</div>
         ) : error ? (
-          <div className="manager-error-banner">
+          <div className="manager-error-banner" role="alert">
             <span>{error}</span>
             <button type="button" onClick={() => void loadHolidays(selectedYear)}>
               {copy.retry}
@@ -151,7 +171,7 @@ export function ManagerHolidaysPage() {
           </div>
         ) : filteredHolidays.length === 0 ? (
           <div className="manager-empty-state">
-            <Sun size={32} />
+            <Sun size={32} aria-hidden="true" />
             <p>{copy.noHolidays}</p>
           </div>
         ) : (
@@ -173,44 +193,32 @@ export function ManagerHolidaysPage() {
                     <tr key={h.id}>
                       <td>
                         <div className="manager-cell-dates">
-                          <CalendarDays size={14} />
+                          <CalendarDays size={14} aria-hidden="true" />
                           <strong>{h.date}</strong>
                         </div>
                       </td>
                       <td>
-                        <div>
-                          <strong>{h.name}</strong>
-                          {h.country && (
-                            <small className="manager-card-sub">
-                              <Globe2 size={12} style={{ display: 'inline', marginInlineEnd: 4 }} />
-                              {h.country}
-                            </small>
-                          )}
-                        </div>
+                        <strong>{h.name}</strong>
+                        {h.country && (
+                          <small className="manager-card-sub">
+                            <Globe2 size={12} className="manager-inline-icon" aria-hidden="true" />
+                            {h.country}
+                          </small>
+                        )}
                       </td>
                       <td>
-                        <span>
-                          {h.days} {copy.days}
-                        </span>
+                        {h.days} {copy.days}
                       </td>
                       <td>
                         <span className="manager-type-badge">{h.type || 'Public'}</span>
                       </td>
                       <td>
                         <div className="manager-badge-stack">
-                          {isFuture ? (
-                            <span className="manager-status-badge pending">
-                              {copy.today}
-                            </span>
-                          ) : (
-                            <span className="manager-status-badge approved">
-                              {copy.completed}
-                            </span>
-                          )}
+                          <span className={`manager-status-badge ${isFuture ? 'info' : 'quiet'}`}>
+                            {isFuture ? copy.today : copy.completed}
+                          </span>
                           {h.recurring && (
-                            <span className="manager-tag-badge">
-                              {copy.recurring}
-                            </span>
+                            <span className="manager-tag-badge">{copy.recurring}</span>
                           )}
                         </div>
                       </td>
@@ -222,15 +230,6 @@ export function ManagerHolidaysPage() {
           </div>
         )}
       </section>
-          </div>
-          <div className="manager-kpi-meta">
-            <span className="manager-kpi-label">{copy.today}</span>
-            <strong className="manager-kpi-value">
-              {nextUpcoming ? nextUpcoming.name : '—'}
-            </strong>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

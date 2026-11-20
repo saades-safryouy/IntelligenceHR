@@ -27,6 +27,7 @@ import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 import { NotificationPanel } from '../notifications/NotificationPanel'
 import { managerTranslations } from '../../pages/manager/translations'
+import { GlobalSearch } from './GlobalSearch'
 
 interface UnreadNotifications {
   total: number
@@ -70,20 +71,20 @@ export function ManagerLayout({
   }, [canViewNotifications])
 
   const navigation = [
-    { to: '/manager/dashboard', label: copy.dashboard, icon: LayoutDashboard },
-    ...(canViewTeam ? [{ to: '/manager/analytics', label: 'Analytics', icon: BarChart3 }] : []),
-    ...(canViewTeam ? [{ to: '/manager/team', label: copy.team, icon: Network }] : []),
-    ...(canViewTeam ? [{ to: '/manager/leave', label: copy.leave, icon: CalendarDays }] : []),
-    { to: '/manager/holidays', label: copy.holidays, icon: Sun },
-    ...(canViewTeam ? [{ to: '/manager/onboarding', label: copy.onboarding, icon: UserPlus }] : []),
-    ...(canViewTeam ? [{ to: '/manager/offboarding', label: copy.offboarding, icon: UserMinus }] : []),
-    ...(canApprove ? [{ to: '/manager/approvals', label: copy.approvals, icon: ClipboardCheck }] : []),
-    ...(canViewWorkflows ? [{ to: '/manager/workflows', label: copy.workflows, icon: GitBranch }] : []),
+    { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ...(canViewTeam ? [{ to: '/manager/analytics', label: 'Reports', icon: BarChart3 }] : []),
+    ...(canViewTeam ? [{ to: '/manager/team', label: 'People', icon: Network }] : []),
+    ...(canViewTeam ? [{ to: '/manager/leave', label: 'Leave', icon: CalendarDays }] : []),
+    { to: '/manager/holidays', label: 'Holidays', icon: Sun },
+    ...(canViewTeam ? [{ to: '/manager/onboarding', label: 'Onboarding', icon: UserPlus }] : []),
+    ...(canViewTeam ? [{ to: '/manager/offboarding', label: 'Offboarding', icon: UserMinus }] : []),
+    ...(canApprove ? [{ to: '/manager/approvals', label: 'Approvals', icon: ClipboardCheck }] : []),
+    ...(canViewWorkflows ? [{ to: '/manager/workflows', label: 'Workflows', icon: GitBranch }] : []),
     ...(canViewNotifications
       ? [
           {
             to: '/manager/notifications',
-            label: copy.notifications,
+            label: 'Notifications',
             icon: Bell,
             badge: unread > 0 ? unread : undefined,
           },
@@ -95,7 +96,7 @@ export function ManagerLayout({
     <div className="app-frame">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="brand-wrap">
-          <Brand compact={collapsed} theme={theme} />
+          <Brand compact={collapsed} theme={theme} darkSurface />
           <button className="icon-button sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
             <X size={18} />
           </button>
@@ -130,6 +131,12 @@ export function ManagerLayout({
             {collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
           </button>
           <div className="manager-shell-label"><Network size={16} /><span>{copy.portal}</span></div>
+          <GlobalSearch
+            placeholder="Search people, departments, roles..."
+            modules={navigation.map(({ label, to }) => ({ label, to }))}
+            employeeTo="/manager/team"
+            onNavigate={navigate}
+          />
           <div className="top-actions">
             <LanguageSwitch language={language} onChange={onLanguageChange} />
             <button className="theme-toggle" onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">

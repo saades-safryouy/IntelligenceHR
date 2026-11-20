@@ -58,10 +58,9 @@ export function ManagerOnboardingPage() {
   }, [loadCases])
 
   const filteredCases = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
     return cases.filter((c) => {
-      const matchesStatus =
-        statusFilter === 'all' || c.status === statusFilter
-      const term = searchTerm.trim().toLowerCase()
+      const matchesStatus = statusFilter === 'all' || c.status === statusFilter
       const matchesSearch =
         !term ||
         c.employee.toLowerCase().includes(term) ||
@@ -82,9 +81,9 @@ export function ManagerOnboardingPage() {
 
   if (!canViewTeam) {
     return (
-      <div className="manager-page">
+      <div className="page manager-page">
         <PageHeader eyebrow={copy.portal} title={copy.onboardingManagement} subtitle={copy.onboardingManagementSubtitle} />
-        <div className="manager-error-banner">{copy.noTeamAccess}</div>
+        <div className="manager-error-banner" role="alert">{copy.noTeamAccess}</div>
       </div>
     )
   }
@@ -92,7 +91,7 @@ export function ManagerOnboardingPage() {
   if (!isApiDataMode) return <ManagerApiNotice message={copy.apiRequired} />
 
   return (
-    <div className="manager-page">
+    <div className="page manager-page">
       <Breadcrumb
         items={[
           { label: copy.portal, path: '/manager/dashboard' },
@@ -107,20 +106,20 @@ export function ManagerOnboardingPage() {
       />
 
       {!hasEmployeeLink && (
-        <div className="manager-notice-banner" style={{ marginBottom: 16 }}>
-          <Info size={16} />
+        <div className="manager-notice-banner">
+          <Info size={16} aria-hidden="true" />
           <span>{copy.teamUnavailable}</span>
         </div>
       )}
 
       <div className="manager-notice-banner">
-        <Info size={16} />
+        <Info size={16} aria-hidden="true" />
         <span>{copy.readOnlyNotice}</span>
       </div>
 
       <div className="manager-kpi-grid">
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon blue">
+          <div className="manager-kpi-icon blue" aria-hidden="true">
             <UserPlus size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -130,7 +129,7 @@ export function ManagerOnboardingPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon orange">
+          <div className="manager-kpi-icon orange" aria-hidden="true">
             <Clock size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -140,7 +139,7 @@ export function ManagerOnboardingPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon mint">
+          <div className="manager-kpi-icon mint" aria-hidden="true">
             <CheckCircle2 size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -150,7 +149,7 @@ export function ManagerOnboardingPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon purple">
+          <div className="manager-kpi-icon purple" aria-hidden="true">
             <CheckCircle2 size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -158,23 +157,27 @@ export function ManagerOnboardingPage() {
             <strong className="manager-kpi-value">{stats.completed}</strong>
           </div>
         </div>
+      </div>
+
       <section className="manager-section">
         <div className="manager-filter-bar">
           <div className="manager-search-box">
-            <Search size={16} />
+            <Search size={16} aria-hidden="true" />
             <input
-              type="text"
+              type="search"
+              aria-label={copy.searchTeam}
               placeholder={copy.searchTeam}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="manager-status-pills">
+          <div className="manager-status-pills" role="group" aria-label={copy.status}>
             {(['all', 'On track', 'At risk', 'Completed'] as const).map((st) => (
               <button
                 key={st}
                 type="button"
+                aria-pressed={statusFilter === st}
                 className={`manager-filter-pill ${statusFilter === st ? 'active' : ''}`}
                 onClick={() => setStatusFilter(st)}
               >
@@ -191,9 +194,9 @@ export function ManagerOnboardingPage() {
         </div>
 
         {loading ? (
-          <div className="manager-loading-state">{copy.loading}</div>
+          <div className="manager-loading-state" role="status">{copy.loading}</div>
         ) : error ? (
-          <div className="manager-error-banner">
+          <div className="manager-error-banner" role="alert">
             <span>{error}</span>
             <button type="button" onClick={() => void loadCases()}>
               {copy.retry}
@@ -201,7 +204,7 @@ export function ManagerOnboardingPage() {
           </div>
         ) : filteredCases.length === 0 ? (
           <div className="manager-empty-state">
-            <UserPlus size={32} />
+            <UserPlus size={32} aria-hidden="true" />
             <p>{copy.noOnboarding}</p>
           </div>
         ) : (
@@ -209,14 +212,19 @@ export function ManagerOnboardingPage() {
             {filteredCases.map((item) => {
               const isExpanded = expandedId === item.id
               const isPendingManager =
-                item.approvalStatus === 'pending_approval' ||
-                item.stage === 'Manager Approval'
+                item.approvalStatus === 'pending_approval' || item.stage === 'Manager Approval'
+              const statusTone =
+                item.status === 'Completed' ? 'approved' : item.status === 'On track' ? 'info' : 'pending'
+              const progressTone =
+                item.status === 'Completed' ? 'success' : item.status === 'At risk' ? 'warning' : ''
+              const progress = Math.min(100, Math.max(0, item.progress))
+              const tasksId = `manager-onboarding-tasks-${item.id}`
 
               return (
                 <div key={item.id} className="manager-case-card">
                   <div className="manager-case-header">
                     <div className="manager-case-meta">
-                      <div className="manager-case-avatar">
+                      <div className="manager-case-avatar" aria-hidden="true">
                         <UserPlus size={18} />
                       </div>
                       <div>
@@ -233,9 +241,7 @@ export function ManagerOnboardingPage() {
                     </div>
 
                     <div className="manager-case-badges">
-                      <span className={`manager-status-badge ${item.status === 'On track' ? 'approved' : item.status === 'Completed' ? 'mint' : 'pending'}`}>
-                        {item.status}
-                      </span>
+                      <span className={`manager-status-badge ${statusTone}`}>{item.status}</span>
                       {item.approvalStatus && (
                         <span className={`manager-status-badge ${item.approvalStatus}`}>
                           {item.approvalStatus.replaceAll('_', ' ')}
@@ -246,13 +252,22 @@ export function ManagerOnboardingPage() {
 
                   <div className="manager-case-progress-wrap">
                     <div className="manager-progress-labels">
-                      <span>{copy.stage}: <strong>{item.stage}</strong></span>
-                      <span>{item.progress}%</span>
+                      <span>
+                        {copy.stage}: <strong>{item.stage}</strong>
+                      </span>
+                      <span>{progress}%</span>
                     </div>
-                    <div className="manager-progress-track">
+                    <div
+                      className="manager-progress-track"
+                      role="progressbar"
+                      aria-label={`${item.employee}: ${copy.stage}`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={progress}
+                    >
                       <div
-                        className="manager-progress-bar"
-                        style={{ width: `${item.progress}%` }}
+                        className={`manager-progress-bar ${progressTone}`}
+                        style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
@@ -261,26 +276,28 @@ export function ManagerOnboardingPage() {
                     <button
                       type="button"
                       className="manager-expand-btn"
+                      aria-expanded={isExpanded}
+                      aria-controls={tasksId}
                       onClick={() => setExpandedId(isExpanded ? null : item.id)}
                     >
-                      <span>{copy.tasks} ({item.employeeTasks.length})</span>
-                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <span>
+                        {copy.tasks} ({item.employeeTasks.length})
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={16} aria-hidden="true" />
+                      ) : (
+                        <ChevronDown size={16} aria-hidden="true" />
+                      )}
                     </button>
 
                     <div className="manager-case-actions">
                       {isPendingManager ? (
-                        <Link
-                          to="/manager/approvals"
-                          className="button primary compact"
-                        >
+                        <Link to="/manager/approvals" className="button primary compact">
                           <span>{copy.reviewAndDecide}</span>
-                          <ExternalLink size={14} />
+                          <ExternalLink size={14} aria-hidden="true" />
                         </Link>
                       ) : (
-                        <Link
-                          to="/manager/workflows"
-                          className="button secondary compact"
-                        >
+                        <Link to="/manager/workflows" className="button secondary compact">
                           <span>{copy.viewDetails}</span>
                         </Link>
                       )}
@@ -288,22 +305,25 @@ export function ManagerOnboardingPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="manager-tasks-panel">
+                    <div className="manager-tasks-panel" id={tasksId}>
                       {item.employeeTasks.length === 0 ? (
                         <small className="manager-card-sub">{copy.noActivity}</small>
                       ) : (
                         <ul className="manager-task-list">
-                          {item.employeeTasks.map((t) => (
-                            <li key={t.id} className={`manager-task-item ${t.done ? 'done' : ''}`}>
-                              {t.done ? (
-                                <CheckCircle2 size={16} className="task-done-icon" />
+                          {item.employeeTasks.map((task) => (
+                            <li
+                              key={task.id}
+                              className={`manager-task-item ${task.done ? 'done' : ''}`}
+                            >
+                              {task.done ? (
+                                <CheckCircle2 size={16} className="task-done-icon" aria-hidden="true" />
                               ) : (
-                                <AlertTriangle size={16} className="task-pending-icon" />
+                                <AlertTriangle size={16} className="task-pending-icon" aria-hidden="true" />
                               )}
-                              <span>{t.labelKey.replaceAll('_', ' ')}</span>
-                              {t.dueDate && (
+                              <span>{task.labelKey.replaceAll('_', ' ')}</span>
+                              {task.dueDate && (
                                 <small className="manager-card-sub">
-                                  {copy.to}: {t.dueDate}
+                                  {copy.to}: {task.dueDate}
                                 </small>
                               )}
                             </li>
@@ -318,7 +338,6 @@ export function ManagerOnboardingPage() {
           </div>
         )}
       </section>
-      </div>
     </div>
   )
 }

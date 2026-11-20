@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
-  ChevronRight,
   CircleHelp,
   LogOut,
   Menu,
@@ -10,12 +9,10 @@ import {
   MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
   Sun,
   X,
 } from 'lucide-react'
 import { navItems, futureModules } from '../../data/navigation'
-import { getEmployees } from '../../data/employeeStore'
 import { useI18n, translations } from '../../contexts/I18nContext'
 import type { Language, Theme } from '../../contexts/I18nContext'
 import { useAuth } from '../../contexts/authHooks'
@@ -23,6 +20,7 @@ import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 import { NotificationPanel } from '../notifications/NotificationPanel'
 import { isApiDataMode } from '../../lib/apiClient'
+import { GlobalSearch } from './GlobalSearch'
 
 export function AppLayout({
   language,
@@ -41,7 +39,6 @@ export function AppLayout({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
-  const [search, setSearch] = useState('')
   const { text } = useI18n()
   const { currentUser, hasPermission } = useAuth()
   const navigate = useNavigate()
@@ -51,7 +48,7 @@ export function AppLayout({
   const navText: Record<string, string> = {
     dashboard: translations[language].dashboard,
     people: translations[language].people,
-    organigramme: translations[language].organigramme,
+    organigramme: 'Organization',
     onboarding: translations[language].onboarding,
     offboarding: translations[language].offboarding,
     leave: leaveLabel,
@@ -59,23 +56,12 @@ export function AppLayout({
     documents: translations[language].documents,
     calendar: translations[language].calendar,
     reports: translations[language].reports,
+    workflows: translations[language].workflows,
     settings: translations[language].settings,
     askIntelligence: translations[language].askIntelligence,
     automations: translations[language].automations,
     advancedSettings: translations[language].advancedSettings,
   }
-
-  const matches = useMemo(
-    () =>
-      getEmployees()
-        .filter((employee) =>
-          `${employee.firstName} ${employee.lastName} ${employee.jobTitle} ${employee.department}`
-            .toLowerCase()
-            .includes(search.toLowerCase()),
-        )
-        .slice(0, 3),
-    [search],
-  )
 
   return (
     <div className="app-frame">
@@ -85,7 +71,7 @@ export function AppLayout({
         }`}
       >
         <div className="brand-wrap">
-          <Brand compact={collapsed} theme={theme} />
+          <Brand compact={collapsed} theme={'dark'} />
           <button
             className="icon-button sidebar-close"
             onClick={() => setMobileOpen(false)}
@@ -186,42 +172,12 @@ export function AppLayout({
             )}
           </button>
 
-          <div className="global-search">
-            <Search size={17} />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={translations[language].search}
-            />
-            <kbd>⌘ K</kbd>
-
-            {search && (
-              <div className="search-results">
-                {matches.length ? (
-                  matches.map((employee) => (
-                    <button
-                      key={employee.id}
-                      onClick={() => {
-                        navigate('/app/employees')
-                        setSearch('')
-                      }}
-                    >
-                      <div className="avatar">{employee.initials}</div>
-                      <span>
-                        <strong>
-                          {employee.firstName} {employee.lastName}
-                        </strong>
-                        <small>{employee.jobTitle}</small>
-                      </span>
-                      <ChevronRight size={15} />
-                    </button>
-                  ))
-                ) : (
-                  <span className="no-results">{text('No people found')}</span>
-                )}
-              </div>
-            )}
-          </div>
+          <GlobalSearch
+            placeholder={translations[language].search}
+            modules={navItems.filter(({ permissions }) => !permissions || permissions.some(hasPermission)).map(({ to, label }) => ({ label: navText[label], to }))}
+            employeeTo="/app/employees"
+            onNavigate={navigate}
+          />
 
           <div className="top-actions">
             <LanguageSwitch language={language} onChange={onLanguageChange} />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -22,6 +22,7 @@ import {
   type ManagerNotification,
 } from '../../data/managerDashboardRepository'
 import { managerTranslations } from './translations'
+import { ManagerApiNotice } from './ManagerDashboardPage'
 import './ManagerDashboard.css'
 
 export function ManagerNotificationsPage() {
@@ -55,30 +56,34 @@ export function ManagerNotificationsPage() {
     void loadNotifications()
   }, [loadNotifications])
 
-  const unreadCount = useMemo(
-    () => items.filter((n) => !n.read_at).length,
-    [items],
-  )
+  const unreadCount = useMemo(() => items.filter((n) => !n.read_at).length, [items])
+
+  const openWorkflow = (item: ManagerNotification) => {
+    if (item.resource_type === 'workflow_instance' && item.resource_id) {
+      navigate(`/manager/workflows/${item.resource_id}`)
+    }
+  }
 
   const handleMarkRead = async (item: ManagerNotification) => {
     if (item.read_at) {
-      if (item.resource_type === 'workflow_instance' && item.resource_id) {
-        navigate(`/manager/workflows/${item.resource_id}`)
-      }
+      openWorkflow(item)
       return
     }
     try {
       await markManagerNotificationRead(item.id)
       setItems((prev) =>
-        prev.map((n) =>
-          n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n,
-        ),
+        prev.map((n) => (n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n)),
       )
-      if (item.resource_type === 'workflow_instance' && item.resource_id) {
-        navigate(`/manager/workflows/${item.resource_id}`)
-      }
+      openWorkflow(item)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : copy.loadError)
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: ManagerNotification) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      void handleMarkRead(item)
     }
   }
 
@@ -100,15 +105,17 @@ export function ManagerNotificationsPage() {
 
   if (!canViewNotifications) {
     return (
-      <div className="manager-page">
+      <div className="page manager-page">
         <PageHeader eyebrow={copy.portal} title={copy.notificationsManagement} subtitle={copy.notificationsManagementSubtitle} />
-        <div className="manager-error-banner">{copy.noTeamAccess}</div>
+        <div className="manager-error-banner" role="alert">{copy.noTeamAccess}</div>
       </div>
     )
   }
 
+  if (!isApiDataMode) return <ManagerApiNotice message={copy.apiRequired} />
+
   return (
-    <div className="manager-page">
+    <div className="page manager-page">
       <Breadcrumb
         items={[
           { label: copy.portal, path: '/manager/dashboard' },
@@ -127,14 +134,14 @@ export function ManagerNotificationsPage() {
           onClick={() => void handleMarkAllRead()}
           disabled={busy || unreadCount === 0}
         >
-          <CheckCheck size={16} />
+          <CheckCheck size={16} aria-hidden="true" />
           <span>{copy.markAllRead}</span>
         </button>
       </PageHeader>
 
       <div className="manager-kpi-grid">
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon blue">
+          <div className="manager-kpi-icon blue" aria-hidden="true">
             <Bell size={20} />
           </div>
           <div className="manager-kpi-meta">
@@ -144,18 +151,32 @@ export function ManagerNotificationsPage() {
         </div>
 
         <div className="manager-kpi-card">
-          <div className="manager-kpi-icon orange">
+          <div className="manager-kpi-icon orange" aria-hidden="true">
             <Mail size={20} />
           </div>
           <div className="manager-kpi-meta">
             <span className="manager-kpi-label">{copy.unreadOnly}</span>
             <strong className="manager-kpi-value">{unreadCount}</strong>
           </div>
+        </div>
+
+        <div className="manager-kpi-card">
+          <div className="manager-kpi-icon mint" aria-hidden="true">
+            <MailOpen size={20} />
+          </div>
+          <div className="manager-kpi-meta">
+            <span className="manager-kpi-label">{copy.completed}</span>
+            <strong className="manager-kpi-value">{items.length - unreadCount}</strong>
+          </div>
+        </div>
+      </div>
+
       <section className="manager-section">
         <div className="manager-filter-bar">
-          <div className="manager-status-pills">
+          <div className="manager-status-pills" role="group" aria-label={copy.notifications}>
             <button
               type="button"
+              aria-pressed={!unreadOnly}
               className={`manager-filter-pill ${!unreadOnly ? 'active' : ''}`}
               onClick={() => setUnreadOnly(false)}
             >
@@ -163,6 +184,7 @@ export function ManagerNotificationsPage() {
             </button>
             <button
               type="button"
+              aria-pressed={unreadOnly}
               className={`manager-filter-pill ${unreadOnly ? 'active' : ''}`}
               onClick={() => setUnreadOnly(true)}
             >
@@ -172,9 +194,9 @@ export function ManagerNotificationsPage() {
         </div>
 
         {loading ? (
-          <div className="manager-loading-state">{copy.loading}</div>
+          <div className="manager-loading-state" role="status">{copy.loading}</div>
         ) : error ? (
-          <div className="manager-error-banner">
+          <div className="manager-error-banner" role="alert">
             <span>{error}</span>
             <button type="button" onClick={() => void loadNotifications()}>
               {copy.retry}
@@ -182,7 +204,7 @@ export function ManagerNotificationsPage() {
           </div>
         ) : items.length === 0 ? (
           <div className="manager-empty-state">
-            <Bell size={32} />
+            <Bell size={32} aria-hidden="true" />
             <p>{copy.noNotifications}</p>
           </div>
         ) : (
@@ -194,10 +216,13 @@ export function ManagerNotificationsPage() {
               return (
                 <div
                   key={n.id}
+                  role="button"
+                  tabIndex={0}
                   className={`manager-notification-item ${isUnread ? 'unread' : 'read'}`}
                   onClick={() => void handleMarkRead(n)}
+                  onKeyDown={(event) => handleKeyDown(event, n)}
                 >
-                  <div className="manager-notification-icon">
+                  <div className="manager-notification-icon" aria-hidden="true">
                     {isWorkflow ? <GitBranch size={18} /> : <FileText size={18} />}
                   </div>
 
@@ -205,8 +230,10 @@ export function ManagerNotificationsPage() {
                     <div className="manager-notification-top">
                       <strong>{n.title}</strong>
                       <div className="manager-cell-dates">
-                        <Clock size={12} />
-                        <small>{n.created_at ? n.created_at.slice(0, 16).replace('T', ' ') : ''}</small>
+                        <Clock size={12} aria-hidden="true" />
+                        <small>
+                          {n.created_at ? n.created_at.slice(0, 16).replace('T', ' ') : ''}
+                        </small>
                       </div>
                     </div>
 
@@ -216,7 +243,7 @@ export function ManagerNotificationsPage() {
                       {isWorkflow && (
                         <span className="manager-link-hint">
                           <span>{copy.viewDetails}</span>
-                          <ExternalLink size={12} />
+                          <ExternalLink size={12} aria-hidden="true" />
                         </span>
                       )}
                       {isUnread && (
@@ -230,18 +257,6 @@ export function ManagerNotificationsPage() {
           </div>
         )}
       </section>
-        </div>
-
-        <div className="manager-kpi-card">
-          <div className="manager-kpi-icon mint">
-            <MailOpen size={20} />
-          </div>
-          <div className="manager-kpi-meta">
-            <span className="manager-kpi-label">{copy.completed}</span>
-            <strong className="manager-kpi-value">{items.length - unreadCount}</strong>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
