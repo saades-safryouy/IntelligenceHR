@@ -19,7 +19,8 @@ ENV COMPOSER_POLICY_ADVISORIES_BLOCK=false
 WORKDIR /var/www/html
 COPY ./ ./
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
+RUN mkdir -p bootstrap/cache storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && composer install --no-dev --optimize-autoloader --no-interaction \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
