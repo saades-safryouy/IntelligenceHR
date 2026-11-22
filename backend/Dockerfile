@@ -10,6 +10,12 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Composer blocks installing packages affected by security advisories by
+# default (laravel/framework ^11 currently trips it) and Railway env vars
+# do not reach Dockerfile RUN steps, so allow it here at build time only.
+ENV COMPOSER_AUDIT_BLOCK_INSECURE=false
+ENV COMPOSER_POLICY_ADVISORIES_BLOCK=false
+
 WORKDIR /var/www/html
 COPY ./ ./
 
