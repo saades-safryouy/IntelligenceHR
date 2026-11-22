@@ -18,5 +18,6 @@ chown -R www-data:www-data storage bootstrap/cache || true
 chmod -R 775 storage bootstrap/cache || true
 
 php artisan migrate --force
+php artisan db:seed --force || true
 
 exec apache2-foreground
