@@ -1,12 +1,15 @@
 import type { Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
 import type { MockRepository, RepositoryPage } from './mockRepository'
-import { apiData, apiFile, apiUpload } from '../lib/apiClient'
+import { apiData, apiFile, apiRequest, apiUpload } from '../lib/apiClient'
 
 export const apiLeaveRepository: MockRepository<LeaveRequest> = {
   async list(): Promise<RepositoryPage<LeaveRequest>> {
-    const response = await apiData<ApiLeaveRequest[]>('/api/v1/leave-requests')
-    const data: LeaveRequest[] = response.map(toApiLeaveRequest)
-    return { data, page: 1, pageSize: data.length, total: data.length }
+    // The backend returns a BARE paginated page {data, page, pageSize, total,
+    // meta} for GET /api/v1/leave-requests (not an enveloped array), so read
+    // the page directly instead of unwrapping it with apiData.
+    const response = await apiRequest<{ data: ApiLeaveRequest[]; page: number; pageSize: number; total: number }>('/api/v1/leave-requests')
+    const data: LeaveRequest[] = response.data.map(toApiLeaveRequest)
+    return { data, page: response.page, pageSize: response.pageSize, total: response.total }
   },
   async get(id) {
     const list = await this.list()

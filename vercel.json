@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/vercel",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://intelligencehr-production.up.railway.app/api/:path*" },
+    { "source": "/sanctum/:path*", "destination": "https://intelligencehr-production.up.railway.app/sanctum/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -12,7 +12,6 @@ import {
   getWorkflowHistory,
   getWorkflowInstance,
   getWorkflowInstanceResource,
-  getWorkflowResource,
   type WorkflowEvent,
   type WorkflowInstance,
   type WorkflowStep,
@@ -127,9 +126,10 @@ export function WorkflowDetailPage() {
         setEvents([])
       }
       try {
-        const context = managerPortal
-          ? await getWorkflowInstanceResource(loaded.id)
-          : await getWorkflowResource(loaded.resource_type, loaded.resource_id)
+        // The instance resource endpoint returns the owning record for every
+        // resource type. The per-type lookup 404s for leave requests because
+        // GET /leave-requests/{id} does not exist on the backend.
+        const context = await getWorkflowInstanceResource(loaded.id)
         setResource(context)
       } catch (contextError) {
         if (contextError instanceof ApiError && (contextError.status === 403 || contextError.status === 404)) {
