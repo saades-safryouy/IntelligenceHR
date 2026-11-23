@@ -45,7 +45,6 @@ import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import { calculateProfileCompletion } from '../../utils/profileCompletion'
 import { formatDate, formatDateTime } from '../../utils/dates'
 import { WorkforceAnalytics } from '../../components/dashboard/WorkforceAnalytics'
-import { ProfessionalAnalytics } from '../../components/dashboard/ProfessionalAnalytics'
 import type {
   Employee,
   Holiday,
