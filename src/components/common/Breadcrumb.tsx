@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import './Breadcrumb.css'
 
 export interface BreadcrumbItem {
   label: string
@@ -16,6 +17,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
           <li key={index} className="breadcrumb-item">
             {item.path && item.path !== '' ? (
               <button
+                type="button"
                 className="breadcrumb-link"
                 onClick={() => navigate(item.path as string)}
                 aria-current={index === items.length - 1 ? 'page' : undefined}

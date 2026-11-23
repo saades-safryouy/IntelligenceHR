@@ -22,21 +22,51 @@ function toSessionUser(source: User | (User & Partial<Employee>)): User {
   }
 }
 
-function toApiSessionUser(principal: ApiPrincipal): AuthenticatedUser {
+function toApiSessionUser(principal: ApiPrincipal, permissionsList: string[] = []): AuthenticatedUser {
   const roleNames: Record<string, Role> = {
     'super-admin': 'HR Administrator',
     'bootstrap-admin': 'HR Administrator',
     'hr-admin': 'HR Administrator',
+    'hr-administrator': 'HR Administrator',
     'hr-manager': 'HR',
+    hr: 'HR',
+    'hr-specialist': 'HR',
+    'hr-officer': 'HR',
     'department-manager': 'Department Head',
+    'department-head': 'Department Head',
     manager: 'Manager',
     employee: 'Employee',
     'workflow-approver': 'Manager',
     'local-it': 'Local IT',
     isd: 'ISD',
   }
-  const mappedRoles = new Set(principal.roles.map((key) => roleNames[key]).filter(Boolean))
-  const rolePriority: Role[] = ['HR Administrator', 'HR', 'Department Head', 'Manager', 'Employee', 'Local IT', 'ISD']
+
+  const mappedRoles = new Set(principal.roles.map((key) => roleNames[key.toLowerCase()]).filter(Boolean))
+
+  const permSet = new Set(permissionsList)
+  const hasHrPermissions =
+    permSet.has('people.employee.view.all') ||
+    permSet.has('people.employee.create') ||
+    permSet.has('rbac.role.view') ||
+    permSet.has('rbac.permission.view')
+
+  const hasManagerPermissions =
+    permSet.has('people.employee.view.department') ||
+    permSet.has('workflow.approve')
+
+  if (hasHrPermissions) {
+    if (mappedRoles.has('HR Administrator') || permSet.has('rbac.role.view')) {
+      mappedRoles.add('HR Administrator')
+    } else {
+      mappedRoles.add('HR')
+    }
+  } else if (hasManagerPermissions && !mappedRoles.has('HR Administrator') && !mappedRoles.has('HR')) {
+    if (!mappedRoles.has('Department Head') && !mappedRoles.has('Manager')) {
+      mappedRoles.add('Manager')
+    }
+  }
+
+  const rolePriority: Role[] = ['HR Administrator', 'HR', 'Department Head', 'Manager', 'Local IT', 'ISD', 'Employee']
   const role = rolePriority.find((candidate) => mappedRoles.has(candidate)) ?? 'Employee'
   const employeeId = principal.employee?.id ?? 0
   const [firstName = '', ...lastNameParts] = principal.user.name.trim().split(/\s+/)
@@ -101,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ])
       .then(([principal, grantedPermissions]) => {
         if (!active) return
-        const sessionUser = toApiSessionUser(principal)
+        const sessionUser = toApiSessionUser(principal, grantedPermissions)
         setCurrentUser(sessionUser)
         setIsAuthenticated(true)
         setRole(sessionUser.role)
@@ -128,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
       const grantedPermissions = await apiData<string[]>('/api/v1/me/permissions')
-      const sessionUser = toApiSessionUser(principal)
+      const sessionUser = toApiSessionUser(principal, grantedPermissions)
       setCurrentUser(sessionUser)
       setIsAuthenticated(true)
       setRole(sessionUser.role)
@@ -143,11 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!foundUser) {
       const employee = employees.find((emp) => emp.email.toLowerCase() === email.toLowerCase())
       if (employee) {
+        // Resolve canonical role from demoUsers if matched by email or ID
+        const matchedDemo = demoUsers.find((u) => u.email.toLowerCase() === employee.email.toLowerCase() || u.id === employee.userId)
         foundUser = {
           id: employee.userId,
           name: `${employee.firstName} ${employee.lastName}`,
           title: employee.jobTitle,
-          role: employee.role || 'Employee',
+          role: matchedDemo?.role || employee.role || 'Employee',
           initials: employee.initials,
           email: employee.email,
           userId: employee.userId,

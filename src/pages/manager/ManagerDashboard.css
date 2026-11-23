@@ -1631,3 +1631,116 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Dimensional manager dashboard; restricted to this internal workspace. */
+.manager-page {
+  --manager-radius: 17px;
+  --manager-gap: 16px;
+}
+.manager-page .page-header {
+  margin-bottom: 2px;
+  padding: 0 0 18px 15px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+.manager-page .page-header::before {
+  position: absolute;
+  inset: 4px auto 22px 0;
+  width: 4px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+  box-shadow: 0 3px 12px rgba(37,130,235,.42);
+  content: '';
+}
+.manager-page .page-header h1 {
+  font-family: 'Figtree', 'Inter', sans-serif;
+  font-size: clamp(27px, 2.6vw, 36px);
+  font-weight: 800;
+  letter-spacing: -1.2px;
+}
+.manager-brief {
+  min-height: 126px;
+  padding: 23px 26px;
+  border: 1px solid color-mix(in srgb, var(--blue) 27%, var(--line));
+  border-radius: var(--manager-radius);
+  background: radial-gradient(ellipse at 88% 5%, rgba(59,130,246,.25), transparent 38%), linear-gradient(115deg, color-mix(in srgb, #1d4ed8 18%, var(--surface)), var(--surface) 65%);
+  box-shadow: 0 20px 42px rgba(4, 19, 43, .18), inset 0 1px rgba(255,255,255,.1);
+}
+.manager-brief::after {
+  display: block;
+  border-color: rgba(147,197,253,.2);
+  box-shadow: 0 0 0 25px rgba(59,130,246,.04), 0 0 0 52px rgba(59,130,246,.025);
+}
+.manager-brief-mark {
+  width: 46px;
+  height: 46px;
+  flex-basis: 46px;
+  border: 1px solid rgba(147,197,253,.42);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(59,130,246,.25), rgba(14,165,233,.1));
+  box-shadow: 0 8px 18px rgba(37,99,235,.16), inset 0 1px rgba(255,255,255,.18);
+}
+.manager-brief-copy > span,
+.manager-panel-heading > div > span { letter-spacing: .12em; }
+.manager-brief-copy strong { font-family: 'Figtree', 'Inter', sans-serif; font-weight: 800; }
+.manager-metric,
+.manager-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line));
+  border-radius: var(--manager-radius);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--blue) 5%, var(--surface)), var(--surface) 58%);
+  box-shadow: 0 16px 36px rgba(4, 19, 43, .16), 0 3px 8px rgba(4, 19, 43, .08);
+}
+.app.light .manager-metric,
+.app.light .manager-panel { box-shadow: 0 16px 34px rgba(33,65,112,.1), 0 3px 8px rgba(33,65,112,.06); }
+.manager-metric {
+  min-height: 144px;
+  padding: 19px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.manager-metric::after {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  inset: -65px -38px auto auto;
+  border: 1px solid color-mix(in srgb, var(--blue) 26%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 13px color-mix(in srgb, var(--blue) 4%, transparent), 0 0 0 28px color-mix(in srgb, var(--blue) 3%, transparent);
+  content: '';
+  pointer-events: none;
+}
+.manager-metric:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+  box-shadow: 0 22px 42px rgba(4,19,43,.2), 0 5px 12px rgba(37,99,235,.12);
+}
+.manager-metric.orange { background: linear-gradient(145deg, color-mix(in srgb, var(--orange) 12%, var(--surface)), var(--surface) 60%); }
+.manager-metric.rose { background: linear-gradient(145deg, color-mix(in srgb, var(--red) 11%, var(--surface)), var(--surface) 60%); }
+.manager-metric-icon {
+  width: 39px;
+  height: 39px;
+  border: 1px solid color-mix(in srgb, var(--blue) 24%, transparent);
+  border-radius: 12px;
+  box-shadow: inset 0 1px rgba(255,255,255,.24), 0 5px 12px rgba(37,99,235,.1);
+}
+.manager-metric > strong { font-family: 'Figtree', 'Inter', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -1.2px; }
+.manager-panel { padding: 21px; }
+.manager-panel-heading {
+  margin-bottom: 17px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--blue) 14%, var(--line));
+}
+.manager-panel-heading h2 { font-size: 15px; font-weight: 800; }
+.manager-person-row,
+.manager-approval-row,
+.manager-activity-row {
+  border-radius: 11px;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.manager-person-row:hover,
+.manager-approval-row:hover,
+.manager-activity-row:hover {
+  transform: translateX(2px);
+  background: color-mix(in srgb, var(--blue) 8%, var(--surface-raised));
+}

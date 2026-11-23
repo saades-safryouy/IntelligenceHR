@@ -40,5 +40,28 @@ export interface AnalyticsOverview {
     averageCompletionHours: number | null
     overdueSteps: number | null
   }
+  tenure: {
+    distribution: Array<{ label: string; value: number }>
+    averageMonths: number | null
+  }
+  gender: {
+    distribution: Array<{ label: string; value: number }>
+    diversityIndex: number | null
+  }
+  hires: {
+    cumulative: Array<{ year: string; total: number }>
+    annual: Array<{ year: string; total: number }>
+    internalVsExternal: { internal: number; external: number }
+  }
+  lifecycle: {
+    onboarding: { active: number; completed: number; avgDays: number | null }
+    offboarding: { active: number; completed: number; avgDays: number | null }
+    retention: { rate: number | null; turnover: number | null }
+  }
+  operations: {
+    documents: { pending: number; expired: number; total: number }
+    compliance: { rate: number | null }
+    automation: { workflows: number; automationRate: number | null }
+  }
   limitations: Record<string, string>
 }
