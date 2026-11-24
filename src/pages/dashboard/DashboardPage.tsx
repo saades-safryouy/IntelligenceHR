@@ -1,23 +1,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import {
+  ArrowUp,
   CalendarDays,
   CheckCircle2,
-  ClipboardCheck,
   Clock3,
   FileText,
-  Laptop,
-  LogOut,
   Plus,
-  Users,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { KpiCard } from '../../components/dashboard/KpiCard'
 import { Event } from '../../components/dashboard/Event'
 import { Activity } from '../../components/dashboard/Activity'
-import { PageHeader } from '../../components/common/PageHeader'
 import { PanelTitle } from '../../components/common/PanelTitle'
-import { Breadcrumb } from '../../components/common/Breadcrumb'
+import { KpiStrip } from '../../components/dashboard/KpiStrip'
 import {
   generateExportCsv,
   downloadFile,
@@ -41,10 +36,16 @@ import {
 import { isApiDataMode } from '../../lib/apiClient'
 import { translations } from '../../contexts/I18nContext'
 import { useI18n } from '../../contexts/I18nContext'
+import { useAuth } from '../../contexts/authHooks'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
 import { calculateProfileCompletion } from '../../utils/profileCompletion'
 import { formatDate, formatDateTime } from '../../utils/dates'
-import { WorkforceAnalytics } from '../../components/dashboard/WorkforceAnalytics'
+import {
+  WorkforceAnalytics,
+  GrowthChartCard,
+  DepartmentDonutCard,
+} from '../../components/dashboard/WorkforceAnalytics'
+import '../../components/dashboard/ReferenceDashboard.css'
 import type {
   Employee,
   Holiday,
@@ -99,12 +100,23 @@ const normalizeRecord = <T extends { id: unknown }>(record: T): T => {
 const normalizeList = <T extends { id: unknown }>(list: T[] | undefined): T[] =>
   (list ?? []).map(normalizeRecord)
 
+// Fill `{placeholder}` tokens in a translation string with real values.
+const fmt = (template: string, vars: Record<string, string | number>): string =>
+  template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? ''))
+
+const parseDay = (value: unknown): Date | null => {
+  if (typeof value !== 'string') return null
+  const d = new Date(`${value.slice(0, 10)}T00:00:00`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 export function DashboardPage() {
   // ---------------------------------------------------------------------------
   // Hooks: every hook must be called on every render, before any early return.
   // ---------------------------------------------------------------------------
   useEmployeeStore()
   const { language } = useI18n()
+  const { currentUser } = useAuth()
   const navigate = useNavigate()
   const t = translations[language]
   const [isExporting, setIsExporting] = useState(false)
@@ -218,18 +230,44 @@ export function DashboardPage() {
       )
       .slice(0, 3),
   [leaveRequests],
-);
+)
 
-  // Get today's date
-  const today = useMemo(() => {
-    const date = new Date()
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    }).toUpperCase()
-  }, [])
+  // New hires in the last 30 days, from the employees' real join dates.
+  const hiresLast30Days = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 30)
+    return employees.filter((employee) => {
+      const joined = parseDay(employee.joined)
+      return joined !== null && joined >= cutoff
+    }).length
+  }, [employees])
+
+  // Workforce mix for the overview bar, from the employees' real statuses.
+  const statusSegments = useMemo(() => {
+    const onLeave = employees.filter((e) => e.status === 'On Leave').length
+    const active = employees.filter((e) => e.status === 'Active').length
+    const other = employees.length - active - onLeave
+    return [
+      { label: t.statusActive, count: active, color: 'var(--blue)' },
+      { label: t.statusOnLeave, count: onLeave, color: 'var(--orange)' },
+      { label: t.statusOther, count: other, color: 'var(--muted-2)' },
+    ]
+  }, [employees, t])
+
+  // Greeting name comes from the logged-in session (GET /api/v1/auth/me).
+  const displayName =
+    currentUser?.firstName && currentUser?.lastName
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : (currentUser?.name ?? '')
+  const greeting = displayName ? `${t.hello} ${displayName}` : t.hello
+
+  // Insight paragraph, built only from the live metrics.
+  const insight = [
+    fmt(t.insightActive, { active: metrics.activeEmployees, total: metrics.totalEmployees }),
+    fmt(t.insightPending, { pending: metrics.leavePending }),
+    fmt(t.insightOnboarding, { onboarding: metrics.activeOnboarding }),
+    fmt(t.insightOnLeave, { onLeave: metrics.onLeaveCount }),
+  ].join('. ') + '.'
 
   // ---------------------------------------------------------------------------
   // Handlers (not hooks)
@@ -271,76 +309,70 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="page dashboard-page">
-      <Breadcrumb
-        items={[
-          { label: t.dashboard },
-        ]}
-      />
+    <div className="page dashboard-page ref-dashboard">
+      <header className="ref-greeting">
+        <div>
+          <h1>{greeting}</h1>
+          <p className="ref-insight">{insight}</p>
+        </div>
+        <div className="ref-actions">
+          <button
+            className="button secondary"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            <FileText size={16} />
+            {isExporting ? 'Exporting...' : t.export}
+          </button>
 
-      <PageHeader
-        eyebrow={today}
-        title="HR workspace overview"
-        subtitle="Here is what is happening across IntillegenceHR today."
-      >
-        <button
-          className="button secondary"
-          onClick={handleExport}
-          disabled={isExporting}
+          <button className="button primary" onClick={handleCreateRequest}>
+            <Plus size={16} />
+            {t.create}
+          </button>
+        </div>
+      </header>
+
+      <KpiStrip metrics={metrics} />
+
+      <section className="ref-wide-card" aria-label={t.workforceOverview}>
+        <span className="ref-wide-label">{t.workforceOverview}</span>
+        <div className="ref-wide-head">
+          <strong className="ref-wide-value">{metrics.activeEmployees}</strong>
+          <span className={`ref-wide-delta ${hiresLast30Days === 0 ? 'neutral' : ''}`}>
+            <ArrowUp size={13} />
+            {fmt(t.newHires30d, { count: hiresLast30Days })}
+          </span>
+        </div>
+        <p className="ref-wide-note">{t.workforceOverviewNote}</p>
+        <div
+          className="ref-segmented-bar"
+          role="img"
+          aria-label={statusSegments.map((s) => `${s.label}: ${s.count}`).join(', ')}
         >
-          <FileText size={16} />
-          {isExporting ? 'Exporting...' : t.export}
-        </button>
-
-        <button className="button primary" onClick={handleCreateRequest}>
-          <Plus size={16} />
-          {t.create}
-        </button>
-      </PageHeader>
-
-      <section className="kpi-grid">
-        <KpiCard
-          label={t.employees}
-          value={metrics.totalEmployees.toString()}
-          trend={`${metrics.activeEmployees} active`}
-          note="employee records"
-          icon={<Users size={18} />}
-        />
-
-        <KpiCard
-          label={t.activeOnboarding}
-          value={metrics.activeOnboarding.toString()}
-          trend={metrics.onboardingAtRisk.toString()}
-          note="requiring attention"
-          icon={<ClipboardCheck size={18} />}
-          warning={metrics.onboardingAtRisk > 0}
-        />
-
-        <KpiCard
-          label={t.activeOffboarding}
-          value={metrics.activeOffboarding.toString()}
-          trend={metrics.offboardingOverdue.toString()}
-          note="overdue workflows"
-          icon={<LogOut size={18} />}
-          warning={metrics.offboardingOverdue > 0}
-        />
-
-        <KpiCard
-          label={t.onLeave}
-          value={metrics.onLeaveCount.toString()}
-          trend={`${metrics.leavePending}`}
-          note="pending approvals"
-          icon={<CalendarDays size={18} />}
-        />
-
-        <KpiCard
-          label="Active employees"
-          value={`${metrics.totalEmployees ? Math.round((metrics.activeEmployees / metrics.totalEmployees) * 100) : 0}%`}
-          trend={metrics.activeEmployees.toString()}
-          note="of total workforce"
-          icon={<Laptop size={18} />}
-        />
+          {statusSegments.map((segment) => (
+            <span
+              key={segment.label}
+              style={{
+                width: `${employees.length ? (segment.count / employees.length) * 100 : 0}%`,
+                background: segment.color,
+              }}
+            />
+          ))}
+        </div>
+        <div className="ref-wide-legend">
+          {statusSegments.map((segment) => (
+            <span key={segment.label}>
+              <i style={{ background: segment.color }} />
+              {segment.label} <strong>{segment.count}</strong>
+            </span>
+          ))}
+        </div>
       </section>
+
+      <div className="ref-charts-row">
+        <GrowthChartCard employees={employees} language={language} />
+        <DepartmentDonutCard employees={employees} />
+      </div>
 
       <div className="dashboard-grid">
         <WorkforceAnalytics
