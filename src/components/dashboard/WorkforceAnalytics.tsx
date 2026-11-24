@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { translations, useI18n } from '../../contexts/I18nContext'
 import type {
   Employee,
   Holiday,
@@ -387,6 +388,170 @@ function LeaveOverview({ leaveRequests, spans, holidays, locale, onOpen }: {
   )
 }
 
+
+// -----------------------------------------------------------------------------
+// Reference-style chart cards (used at the top of the redesigned dashboard)
+// -----------------------------------------------------------------------------
+
+/**
+ * Line chart card: headcount (blue) vs new hires (orange), with legend chips
+ * like the reference dashboard. Data comes from the employees' join dates.
+ */
+export function GrowthChartCard({
+  employees,
+  language,
+}: {
+  employees: Employee[]
+  language: string
+}) {
+  const { language: uiLanguage } = useI18n()
+  const t = translations[uiLanguage]
+  const locale = safeLocale(language)
+  const reducedMotion = useReducedMotion()
+  const [range, setRange] = useState<6 | 12>(6)
+
+  const growth = useMemo(() => growthSeries(employees, range, locale), [employees, range, locale])
+
+  return (
+    <article className="ref-chart-card" aria-label={t.employeeGrowth}>
+      <div className="ref-chart-head">
+        <div>
+          <h2>{t.employeeGrowth}</h2>
+          <p>{t.employeeGrowthNote}</p>
+        </div>
+        <div className="analytics-range" role="group" aria-label="Chart time range">
+          {([6, 12] as const).map((months) => (
+            <button
+              key={months}
+              type="button"
+              className={range === months ? 'active' : ''}
+              aria-pressed={range === months}
+              onClick={() => setRange(months)}
+            >
+              {months}M
+            </button>
+          ))}
+        </div>
+      </div>
+      {employees.length ? (
+        <>
+          <div className="analytics-chart-wrap">
+            <GrowthChart data={growth} reducedMotion={reducedMotion} />
+          </div>
+          <div className="ref-legend-chips">
+            <span className="ref-legend-chip">
+              <i style={{ background: 'var(--wa-accent)' }} />
+              {t.headcount}
+            </span>
+            <span className="ref-legend-chip">
+              <i style={{ background: 'var(--wa-warning)' }} />
+              {t.newHires}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="analytics-empty">No employee data available yet.</div>
+      )}
+    </article>
+  )
+}
+
+/**
+ * Donut card: employees by department, with the interactive legend from the
+ * existing breakdown. The centre shows the hovered department (or the total).
+ */
+export function DepartmentDonutCard({ employees }: { employees: Employee[] }) {
+  const { language } = useI18n()
+  const t = translations[language]
+  const [activeDepartment, setActiveDepartment] = useState<string | null>(null)
+
+  const departments = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const employee of employees) {
+      const name = String(employee.department || 'Unassigned')
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+    return [...counts].sort((a, b) => b[1] - a[1])
+  }, [employees])
+  const departmentTotal = departments.reduce((sum, [, n]) => sum + n, 0)
+  const selectedDepartment = departments.find(([name]) => name === activeDepartment)
+  const circumference = 100
+
+  return (
+    <article className="ref-chart-card" aria-label={t.departmentDistribution}>
+      <div className="ref-chart-head">
+        <div>
+          <h2>{t.departmentDistribution}</h2>
+          <p>{t.departmentDistributionNote}</p>
+        </div>
+      </div>
+      {departmentTotal ? (
+        <>
+          <div className="wa-donut-box">
+            <svg viewBox="0 0 42 42" role="img" aria-label="Employee distribution by department">
+              <circle cx="21" cy="21" r="15.915" className="wa-donut-track" />
+              {departments.map(([name, count], index) => {
+                const value = (count / departmentTotal) * circumference
+                const drawn = Math.max(value - 0.8, 0)
+                const offset = departments
+                  .slice(0, index)
+                  .reduce((sum, [, prior]) => sum + (prior / departmentTotal) * circumference, 0)
+                return (
+                  <circle
+                    key={name}
+                    cx="21"
+                    cy="21"
+                    r="15.915"
+                    className={[
+                      'wa-donut-seg',
+                      activeDepartment === name ? 'is-active' : '',
+                      activeDepartment && activeDepartment !== name ? 'is-dim' : '',
+                    ].join(' ')}
+                    style={{ stroke: seriesColors[index % seriesColors.length] }}
+                    strokeDasharray={`${drawn} ${circumference - drawn}`}
+                    strokeDashoffset={-offset}
+                    onMouseEnter={() => setActiveDepartment(name)}
+                    onMouseLeave={() => setActiveDepartment(null)}
+                  >
+                    <title>{`${name}: ${count} employees`}</title>
+                  </circle>
+                )
+              })}
+              <text x="21" y="21.5" className="wa-donut-value">{selectedDepartment?.[1] ?? departmentTotal}</text>
+              <text x="21" y="26" className="wa-donut-label">{selectedDepartment?.[0] ?? t.employeesWord}</text>
+            </svg>
+          </div>
+          <ul className="wa-legend wa-scroll">
+            {departments.map(([name, count], index) => (
+              <li key={name}>
+                <button
+                  type="button"
+                  className={[
+                    'wa-legend-row',
+                    activeDepartment && activeDepartment !== name ? 'is-dim' : '',
+                  ].join(' ')}
+                  onMouseEnter={() => setActiveDepartment(name)}
+                  onMouseLeave={() => setActiveDepartment(null)}
+                  onFocus={() => setActiveDepartment(name)}
+                  onBlur={() => setActiveDepartment(null)}
+                  aria-label={`${name}: ${count} employees`}
+                >
+                  <i className="wa-swatch wa-round" style={{ background: seriesColors[index % seriesColors.length] }} />
+                  <span className="wa-legend-label">{name}</span>
+                  <span className="wa-count">{count}</span>
+                  <strong>{((count / departmentTotal) * 100).toFixed(1)}%</strong>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div className="analytics-empty">No department data available yet.</div>
+      )}
+    </article>
+  )
+}
+
 // -----------------------------------------------------------------------------
 // Main component
 // -----------------------------------------------------------------------------
@@ -409,11 +574,8 @@ export function WorkforceAnalytics({
   const navigate = useNavigate()
   const locale = safeLocale(language)
   const reducedMotion = useReducedMotion()
-  const [range, setRange] = useState<6 | 12>(6)
-  const [activeDepartment, setActiveDepartment] = useState<string | null>(null)
 
   const spans = useMemo(() => toSpans(leaveRequests), [leaveRequests])
-  const growth = useMemo(() => growthSeries(employees, range, locale), [employees, range, locale])
 
   const departments = useMemo(() => {
     const counts = new Map<string, number>()
@@ -424,7 +586,6 @@ export function WorkforceAnalytics({
     return [...counts].sort((a, b) => b[1] - a[1])
   }, [employees])
   const departmentTotal = departments.reduce((sum, [, n]) => sum + n, 0)
-  const selectedDepartment = departments.find(([name]) => name === activeDepartment)
 
   const employment = useMemo(() => {
     const counts = new Map<string, number>()
@@ -452,117 +613,11 @@ export function WorkforceAnalytics({
     ? Math.round(activeOffboarding.reduce((sum, request) => sum + request.progress, 0) / activeOffboarding.length)
     : 0
 
-  const circumference = 100
   const maxDept = Math.max(1, ...departments.map(([, n]) => n))
   const maxStatus = Math.max(1, ...employment.map(([, n]) => n))
 
   return (
     <section className="analytics-grid wa" aria-label="Workforce analytics">
-      {/* --------------------------- Employee growth --------------------------- */}
-      <article className="panel analytics-panel analytics-hires">
-        <div className="analytics-heading">
-          <div>
-            <h2>Employee growth</h2>
-            <p>Monthly headcount and new hires</p>
-          </div>
-          <div className="analytics-range" role="group" aria-label="Chart time range">
-            {([6, 12] as const).map((months) => (
-              <button
-                key={months}
-                type="button"
-                className={range === months ? 'active' : ''}
-                aria-pressed={range === months}
-                onClick={() => setRange(months)}
-              >
-                {months}M
-              </button>
-            ))}
-          </div>
-        </div>
-        {employees.length ? (
-          <>
-            <div className="analytics-chart-wrap">
-              <GrowthChart data={growth} reducedMotion={reducedMotion} />
-            </div>
-            <div className="wa-footer">
-              <span><i className="wa-swatch" style={{ background: 'var(--wa-accent)' }} /> Headcount</span>
-              <span><i className="wa-swatch" style={{ background: 'var(--wa-success)' }} /> New hires</span>
-            </div>
-          </>
-        ) : <div className="analytics-empty">No employee data available yet.</div>}
-      </article>
-
-      {/* ------------------------- Department breakdown ------------------------ */}
-      <article className="panel analytics-panel analytics-departments">
-        <div className="analytics-heading">
-          <div>
-            <h2>Department breakdown</h2>
-            <p>Current employees by department</p>
-          </div>
-        </div>
-        {departmentTotal ? (
-          <>
-            <div className="wa-donut-box">
-              <svg viewBox="0 0 42 42" role="img" aria-label="Employee distribution by department">
-                <circle cx="21" cy="21" r="15.915" className="wa-donut-track" />
-                {departments.map(([name, count], index) => {
-                  const value = (count / departmentTotal) * circumference
-                  const drawn = Math.max(value - 0.8, 0)
-                  const offset = departments
-                    .slice(0, index)
-                    .reduce((sum, [, prior]) => sum + (prior / departmentTotal) * circumference, 0)
-                  return (
-                    <circle
-                      key={name}
-                      cx="21"
-                      cy="21"
-                      r="15.915"
-                      className={[
-                        'wa-donut-seg',
-                        activeDepartment === name ? 'is-active' : '',
-                        activeDepartment && activeDepartment !== name ? 'is-dim' : '',
-                      ].join(' ')}
-                      style={{ stroke: seriesColors[index % seriesColors.length] }}
-                      strokeDasharray={`${drawn} ${circumference - drawn}`}
-                      strokeDashoffset={-offset}
-                      onMouseEnter={() => setActiveDepartment(name)}
-                      onMouseLeave={() => setActiveDepartment(null)}
-                    >
-                      <title>{`${name}: ${count} employees`}</title>
-                    </circle>
-                  )
-                })}
-                <text x="21" y="21.5" className="wa-donut-value">{selectedDepartment?.[1] ?? departmentTotal}</text>
-                <text x="21" y="26" className="wa-donut-label">{selectedDepartment?.[0] ?? 'employees'}</text>
-              </svg>
-            </div>
-            <ul className="wa-legend wa-scroll">
-              {departments.map(([name, count], index) => (
-                <li key={name}>
-                  <button
-                    type="button"
-                    className={[
-                      'wa-legend-row',
-                      activeDepartment && activeDepartment !== name ? 'is-dim' : '',
-                    ].join(' ')}
-                    onMouseEnter={() => setActiveDepartment(name)}
-                    onMouseLeave={() => setActiveDepartment(null)}
-                    onFocus={() => setActiveDepartment(name)}
-                    onBlur={() => setActiveDepartment(null)}
-                    aria-label={`${name}: ${count} employees`}
-                  >
-                    <i className="wa-swatch wa-round" style={{ background: seriesColors[index % seriesColors.length] }} />
-                    <span className="wa-legend-label">{name}</span>
-                    <span className="wa-count">{count}</span>
-                    <strong>{((count / departmentTotal) * 100).toFixed(1)}%</strong>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : <div className="analytics-empty">No department data available yet.</div>}
-      </article>
-
       {/* ---------------------------- Leave overview --------------------------- */}
       <article className="panel analytics-panel">
         <div className="analytics-heading">
