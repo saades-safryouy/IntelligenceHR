@@ -11,6 +11,8 @@ use App\Models\LeaveType;
 use App\Models\Notification;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
+use App\Models\TrainingCourse;
+use App\Models\TrainingEnrollment;
 use App\Models\User;
 use App\Models\WorkflowTemplate;
 use App\Models\WorkflowTemplateVersion;
@@ -124,6 +126,29 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Throne Day', 'name_key' => 'holiday.throneDay', 'date' => '2026-07-30', 'days' => 1, 'recurring' => true, 'type' => 'Public', 'country' => 'MA', 'site' => null],
         ] as $h) {
             Holiday::updateOrCreate(['name' => $h['name'], 'date' => $h['date']], $h);
+        }
+
+        // --- Training ---
+        foreach ([
+            ['title' => 'Leadership Essentials', 'description' => 'Core leadership skills for current and future managers: feedback, delegation and team motivation.', 'category' => 'Leadership', 'duration_hours' => 16, 'provider' => 'IntelligenceHR Academy', 'status' => 'active'],
+            ['title' => 'Advanced Excel for HR', 'description' => 'Pivot tables, formulas and dashboards for HR reporting.', 'category' => 'Data & Tools', 'duration_hours' => 8, 'provider' => 'IntelligenceHR Academy', 'status' => 'active'],
+            ['title' => 'Effective Communication', 'description' => 'Clear, assertive communication with colleagues and candidates.', 'category' => 'Soft Skills', 'duration_hours' => 6, 'provider' => 'PeopleWorks', 'status' => 'active'],
+            ['title' => 'GDPR & Data Protection', 'description' => 'Handling employee data lawfully (Moroccan law 09-08 and GDPR basics).', 'category' => 'Compliance', 'duration_hours' => 5, 'provider' => 'SafeCo', 'status' => 'archived'],
+        ] as $course) {
+            TrainingCourse::updateOrCreate(['title' => $course['title']], $course);
+        }
+        $courseIds = TrainingCourse::pluck('id', 'title')->all();
+        foreach ([
+            ['employee_id' => 1047, 'course' => 'Leadership Essentials', 'status' => 'in_progress', 'progress' => 40, 'completed_at' => null],
+            ['employee_id' => 1043, 'course' => 'Advanced Excel for HR', 'status' => 'completed', 'progress' => 100, 'completed_at' => '2026-10-15'],
+            ['employee_id' => 1044, 'course' => 'Effective Communication', 'status' => 'enrolled', 'progress' => 0, 'completed_at' => null],
+            ['employee_id' => 1045, 'course' => 'GDPR & Data Protection', 'status' => 'completed', 'progress' => 100, 'completed_at' => '2026-09-20'],
+            ['employee_id' => 1048, 'course' => 'Leadership Essentials', 'status' => 'enrolled', 'progress' => 0, 'completed_at' => null],
+        ] as $enr) {
+            TrainingEnrollment::updateOrCreate(
+                ['employee_id' => $enr['employee_id'], 'course_id' => $courseIds[$enr['course']]],
+                ['status' => $enr['status'], 'progress' => $enr['progress'], 'completed_at' => $enr['completed_at']]
+            );
         }
 
         // --- Workflow templates (one published v1 each) ---

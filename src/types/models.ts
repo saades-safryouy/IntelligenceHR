@@ -269,6 +269,31 @@ export const ONBOARDING_STAGE_ORDER: OnboardingStage[] = [
   'Completed',
 ]
 
+export type TrainingCourseStatus = 'active' | 'archived'
+export type TrainingEnrollmentStatus = 'enrolled' | 'in_progress' | 'completed'
+
+export interface TrainingCourse {
+  id: string
+  title: string
+  description: string
+  category: string
+  durationHours: number
+  provider: string
+  status: TrainingCourseStatus
+  enrollmentsCount: number
+}
+
+export interface TrainingEnrollment {
+  id: string
+  employeeId: number
+  employee: string
+  courseId: string
+  course: string
+  status: TrainingEnrollmentStatus
+  progress: number
+  completedAt: string | null
+}
+
 export const NATIONALITIES: Record<number, { code: string; key: string }> = {
   1: { code: 'MA', key: 'nationalityMA' },
   2: { code: 'FR', key: 'nationalityFR' },

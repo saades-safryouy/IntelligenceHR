@@ -83,6 +83,11 @@ export const navItems: NavItem[] = [
     label: 'calendar',
     icon: CalendarDays,
   },
+  {
+    to: '/app/training',
+    label: 'training',
+    icon: GraduationCap,
+  },
    {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
@@ -125,12 +130,6 @@ export const futureModules = [
     title: 'Performance',
     detail: 'Build a continuous performance culture with a connected people layer.',
     icon: BarChart3,
-  },
-  {
-    path: '/app/training',
-    title: 'Training & Development',
-    detail: 'Learning journeys and skills intelligence will arrive here.',
-    icon: GraduationCap,
   },
   {
     path: '/app/payroll',

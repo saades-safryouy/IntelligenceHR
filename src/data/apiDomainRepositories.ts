@@ -1,4 +1,4 @@
-import type { Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
+import type { Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
 import type { MockRepository, RepositoryPage } from './mockRepository'
 import { apiData, apiFile, apiRequest, apiUpload } from '../lib/apiClient'
 
@@ -577,4 +577,129 @@ export const apiDocumentActions = {
     await apiData(`/api/v1/employee-documents/${id}`, { method: 'DELETE' })
   },
   file: apiFile,
+}
+
+interface ApiTrainingCourse {
+  id: number | string
+  title: string
+  description: string | null
+  category: string
+  duration_hours: number
+  provider: string | null
+  status: TrainingCourse['status']
+  enrollments_count: number
+}
+
+function toTrainingCourse(item: ApiTrainingCourse): TrainingCourse {
+  return {
+    id: String(item.id),
+    title: item.title ?? '',
+    description: item.description ?? '',
+    category: item.category ?? 'General',
+    durationHours: Number(item.duration_hours ?? 0),
+    provider: item.provider ?? '',
+    status: item.status ?? 'active',
+    enrollmentsCount: Number(item.enrollments_count ?? 0),
+  }
+}
+
+function toTrainingCourseBody(input: Partial<TrainingCourse>) {
+  return {
+    title: input.title,
+    description: input.description ?? null,
+    category: input.category ?? 'General',
+    duration_hours: input.durationHours ?? 0,
+    provider: input.provider ?? null,
+    status: input.status ?? 'active',
+  }
+}
+
+export const apiTrainingCourseRepository: MockRepository<TrainingCourse> = {
+  async list(): Promise<RepositoryPage<TrainingCourse>> {
+    const response = await apiData<ApiTrainingCourse[]>('/api/v1/training-courses')
+    const data = response.map(toTrainingCourse)
+    return { data, page: 1, pageSize: data.length, total: data.length }
+  },
+  async get(id) {
+    const list = await this.list()
+    return list.data.find((c) => c.id === id) ?? null
+  },
+  async create(input) {
+    const res = await apiData<ApiTrainingCourse>('/api/v1/training-courses', {
+      method: 'POST',
+      body: JSON.stringify(toTrainingCourseBody(input)),
+    })
+    return toTrainingCourse(res)
+  },
+  async update(id, input) {
+    const res = await apiData<ApiTrainingCourse>(`/api/v1/training-courses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(toTrainingCourseBody(input)),
+    })
+    return toTrainingCourse(res)
+  },
+  async delete(id) {
+    await apiData(`/api/v1/training-courses/${id}`, { method: 'DELETE' })
+    return true
+  },
+}
+
+interface ApiTrainingEnrollment {
+  id: number | string
+  employee_id: number
+  employee: string | null
+  course_id: number | string
+  course: string | null
+  status: TrainingEnrollment['status']
+  progress: number
+  completed_at: string | null
+}
+
+function toTrainingEnrollment(item: ApiTrainingEnrollment): TrainingEnrollment {
+  return {
+    id: String(item.id),
+    employeeId: Number(item.employee_id),
+    employee: item.employee ?? '',
+    courseId: String(item.course_id),
+    course: item.course ?? '',
+    status: item.status ?? 'enrolled',
+    progress: Number(item.progress ?? 0),
+    completedAt: item.completed_at ?? null,
+  }
+}
+
+export const apiTrainingEnrollmentRepository: MockRepository<TrainingEnrollment> = {
+  async list(): Promise<RepositoryPage<TrainingEnrollment>> {
+    const response = await apiData<ApiTrainingEnrollment[]>('/api/v1/training-enrollments')
+    const data = response.map(toTrainingEnrollment)
+    return { data, page: 1, pageSize: data.length, total: data.length }
+  },
+  async get(id) {
+    const list = await this.list()
+    return list.data.find((e) => e.id === id) ?? null
+  },
+  async create(input) {
+    const res = await apiData<ApiTrainingEnrollment>('/api/v1/training-enrollments', {
+      method: 'POST',
+      body: JSON.stringify({
+        employee_id: input.employeeId,
+        course_id: Number(input.courseId),
+      }),
+    })
+    return toTrainingEnrollment(res)
+  },
+  async update(id, input) {
+    const res = await apiData<ApiTrainingEnrollment>(`/api/v1/training-enrollments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status: input.status,
+        progress: input.progress,
+      }),
+    })
+    return toTrainingEnrollment(res)
+  },
+  async delete(id) {
+    await apiData(`/api/v1/training-enrollments/${id}`, { method: 'DELETE' })
+    return true
+  },
 }

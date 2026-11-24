@@ -1,0 +1,217 @@
+/* Training page — catalog, my learning, enrollments. Uses the app's shared tokens. */
+
+.trn-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+
+.trn-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trn-tab-active {
+  border-color: var(--blue, #2563eb);
+  background-color: color-mix(in srgb, var(--blue, #2563eb) 10%, transparent);
+  color: var(--blue, #2563eb);
+}
+
+.trn-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--red, #dc2626);
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--red, #dc2626) 8%, transparent);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.trn-form {
+  margin-block-end: 16px;
+  padding: 20px;
+}
+
+.trn-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 8px;
+}
+
+.trn-form-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.trn-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.trn-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.trn-form-grid label input,
+.trn-form-grid label select {
+  font-weight: 400;
+}
+
+.trn-span {
+  grid-column: 1 / -1;
+}
+
+.trn-form-error {
+  margin: 12px 0 0;
+  color: var(--red, #dc2626);
+  font-size: 13px;
+}
+
+.trn-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.trn-panel {
+  padding: 8px 20px 20px;
+  overflow-x: auto;
+}
+
+.trn-empty {
+  padding: 32px 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.trn-filter {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.trn-filter label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.trn-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.trn-table th,
+.trn-table td {
+  padding: 12px 8px;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.trn-table th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.trn-table td strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.trn-table td small {
+  color: var(--muted);
+}
+
+.trn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.trn-enrolled {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint, #16a34a);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.trn-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 180px;
+}
+
+.trn-progress-bar {
+  flex: 1;
+  block-size: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--line);
+}
+
+.trn-progress-bar span {
+  display: block;
+  block-size: 100%;
+  border-radius: 999px;
+  background-color: var(--blue, #2563eb);
+}
+
+.trn-progress-input {
+  inline-size: 56px;
+  padding: 4px 6px;
+}
+
+.trn-enroll-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.trn-enroll-form select {
+  min-inline-size: 200px;
+}
+
+.trn-confirm {
+  margin-block-start: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--surface);
+  font-size: 14px;
+}

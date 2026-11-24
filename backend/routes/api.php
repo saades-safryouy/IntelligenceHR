@@ -12,6 +12,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 
@@ -117,6 +118,16 @@ Route::prefix('v1')->group(function () {
 
         // Audit log
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+        // Training
+        Route::get('training-courses', [TrainingController::class, 'indexCourses']);
+        Route::post('training-courses', [TrainingController::class, 'storeCourse']);
+        Route::put('training-courses/{trainingCourse}', [TrainingController::class, 'updateCourse']);
+        Route::delete('training-courses/{trainingCourse}', [TrainingController::class, 'destroyCourse']);
+        Route::get('training-enrollments', [TrainingController::class, 'indexEnrollments']);
+        Route::post('training-enrollments', [TrainingController::class, 'storeEnrollment']);
+        Route::patch('training-enrollments/{trainingEnrollment}', [TrainingController::class, 'updateEnrollment']);
+        Route::delete('training-enrollments/{trainingEnrollment}', [TrainingController::class, 'destroyEnrollment']);
 
         // Org chart, dashboards, analytics
         Route::get('org-chart', [DashboardController::class, 'orgChart']);

@@ -19,10 +19,10 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest } from '../types/models'
+import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
 import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository } from './apiDomainRepositories'
 import { departments } from './mock'
 
 export type RepositoryOperation = 'list' | 'get' | 'create' | 'update' | 'delete'
@@ -230,6 +230,26 @@ export const offboardingRepository = isApiDataMode
       create: createOffboardingTask,
       update: updateOffboardingTask,
       delete: deleteOffboardingTask,
+    })
+
+export const trainingCourseRepository = isApiDataMode
+  ? apiTrainingCourseRepository
+  : createMockRepository<TrainingCourse>({
+      read: () => [],
+      get: () => null,
+      create: (input) => ({ id: String(Date.now()), enrollmentsCount: 0, ...input }),
+      update: (_id, _updates) => null,
+      delete: () => true,
+    })
+
+export const trainingEnrollmentRepository = isApiDataMode
+  ? apiTrainingEnrollmentRepository
+  : createMockRepository<TrainingEnrollment>({
+      read: () => [],
+      get: () => null,
+      create: (input) => ({ id: String(Date.now()), ...input }),
+      update: (_id, _updates) => null,
+      delete: () => true,
     })
 
 export const documentRepository = isApiDataMode

@@ -14,6 +14,8 @@ use App\Models\Notification;
 use App\Models\OffboardingCase;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
+use App\Models\TrainingCourse;
+use App\Models\TrainingEnrollment;
 use App\Models\User;
 use App\Models\WorkflowDelegation;
 use App\Models\WorkflowInstance;
@@ -186,6 +188,38 @@ class ApiPresenter
             'start_date' => $e->start_date?->toDateString(),
             'end_date' => $e->end_date?->toDateString(),
             'note' => $e->note,
+            'created_at' => $e->created_at?->toISOString(),
+            'updated_at' => $e->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function trainingCourse(TrainingCourse $c): array
+    {
+        return [
+            'id' => (string) $c->id,
+            'title' => $c->title,
+            'description' => $c->description,
+            'category' => $c->category,
+            'duration_hours' => (int) $c->duration_hours,
+            'provider' => $c->provider,
+            'status' => $c->status,
+            'enrollments_count' => $c->enrollments_count ?? $c->enrollments()->count(),
+            'created_at' => $c->created_at?->toISOString(),
+            'updated_at' => $c->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function trainingEnrollment(TrainingEnrollment $e): array
+    {
+        return [
+            'id' => (string) $e->id,
+            'employee_id' => $e->employee_id,
+            'employee' => $e->employee ? $e->employee->first_name.' '.$e->employee->last_name : null,
+            'course_id' => (string) $e->course_id,
+            'course' => $e->course ? $e->course->title : null,
+            'status' => $e->status,
+            'progress' => (int) $e->progress,
+            'completed_at' => $e->completed_at?->toISOString(),
             'created_at' => $e->created_at?->toISOString(),
             'updated_at' => $e->updated_at?->toISOString(),
         ];
