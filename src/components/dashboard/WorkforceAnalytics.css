@@ -4,7 +4,8 @@
   .app.light (--blue, --mint, --orange, --red, --purple, --muted, --line,
   --surface...). Dark and light mode switch automatically with .app.light.
 */
-.wa {
+.wa,
+.ref-chart-card {
   --wa-accent: var(--blue, #3b82f6);
   --wa-success: var(--mint, #34d399);
   --wa-warning: var(--orange, #fbbf24);
@@ -88,17 +89,17 @@
 }
 
 .wa-stop-accent {
-  stop-color: var(--wa-accent);
+  stop-color: var(--wa-accent, var(--blue, #287be9));
 }
 
 .wa-grid-line {
-  stroke: var(--wa-line);
+  stroke: var(--wa-line, rgba(128, 138, 158, 0.28));
   stroke-dasharray: 3 5;
 }
 
 .wa-tick,
 .wa-axis {
-  fill: var(--wa-muted);
+  fill: var(--wa-muted, var(--muted-2, #64748b));
   font-size: 11px;
 }
 
@@ -111,16 +112,16 @@
 }
 
 .wa-line-head {
-  stroke: var(--wa-accent);
+  stroke: var(--wa-accent, var(--blue, #287be9));
 }
 
 .wa-line-hires {
   /* Orange second series, like the reference dashboard's forecast line. */
-  stroke: var(--wa-warning);
+  stroke: var(--wa-warning, var(--orange, #d97706));
 }
 
 .wa-guide {
-  stroke: var(--wa-accent);
+  stroke: var(--wa-accent, var(--blue, #287be9));
   stroke-opacity: 0.35;
   stroke-dasharray: 4 4;
 }
@@ -132,11 +133,11 @@
 }
 
 .wa-point-head {
-  stroke: var(--wa-accent);
+  stroke: var(--wa-accent, var(--blue, #287be9));
 }
 
 .wa-point-hires {
-  stroke: var(--wa-warning);
+  stroke: var(--wa-warning, var(--orange, #d97706));
 }
 
 .wa-chart rect:focus-visible {
@@ -146,17 +147,17 @@
 }
 
 .wa-tip-bg {
-  fill: var(--wa-tip-bg);
+  fill: var(--wa-tip-bg, var(--text, #1f2937));
 }
 
 .wa-tip-title {
-  fill: var(--wa-tip-text);
+  fill: var(--wa-tip-text, var(--surface, #ffffff));
   font-size: 12px;
   font-weight: 700;
 }
 
 .wa-tip-text {
-  fill: var(--wa-tip-text);
+  fill: var(--wa-tip-text, var(--surface, #ffffff));
   fill-opacity: 0.85;
   font-size: 11.5px;
 }
@@ -180,7 +181,7 @@
 }
 
 .wa-donut-track {
-  stroke: var(--wa-soft);
+  stroke: var(--wa-soft, rgba(128, 138, 158, 0.16));
 }
 
 .wa-donut-seg {
