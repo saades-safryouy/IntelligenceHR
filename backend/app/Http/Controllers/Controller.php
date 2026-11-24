@@ -49,10 +49,38 @@ abstract class Controller extends BaseController
                 'workflow.approve', 'workflow.instance.view', 'notification.view',
             ],
             'workflow-approver' => ['workflow.approve', 'workflow.instance.view', 'notification.view'],
-            'employee' => ['people.employee.self.update', 'notification.view'],
+            'employee' => ['people.employee.self.update', 'notification.view', 'payroll.payslip.view.self'],
             'local-it' => ['workflow.approve', 'workflow.instance.view', 'notification.view'],
             'isd' => ['workflow.approve', 'workflow.instance.view', 'notification.view'],
+            // Payroll (BRD §9.2). No 'payroll-officer' role: decision D-03
+            // (hr-admin only, day to day). No 'finance' role: decision
+            // D-02 (the accountant uses hr-admin; a separate finance
+            // SaaS exists as an optional add-on).
+            'platform-admin' => [
+                'tenant.manage', 'tenant.switch',
+                'payroll.parameter.manage', 'payroll.jurisdiction.manage',
+            ],
+            'tenant-admin' => [
+                'payroll.client_config.manage', 'payroll.settings.manage',
+            ],
         ];
+
+        // Payroll permissions per role (BRD §9.2 matrix).
+        $payroll = [
+            'hr-admin' => [
+                'payroll.run.view', 'payroll.run.create', 'payroll.run.calculate',
+                'payroll.run.validate', 'payroll.run.approve', 'payroll.run.close',
+                'payroll.run.send_back', 'payroll.salary.view', 'payroll.salary.manage',
+                'payroll.component.manage', 'payroll.client_config.manage',
+                'payroll.payslip.view.all', 'payroll.export', 'payroll.settings.manage',
+            ],
+            'hr-manager' => ['payroll.run.view', 'payroll.payslip.view.self'],
+            'department-manager' => ['payroll.payslip.view.self'],
+            'manager' => ['payroll.payslip.view.self'],
+        ];
+        foreach ($payroll as $role => $perms) {
+            $map[$role] = array_values(array_unique(array_merge($map[$role] ?? [], $perms)));
+        }
 
         $perms = [];
         foreach ($roles as $role) {
@@ -114,6 +142,11 @@ abstract class Controller extends BaseController
             && self::hasHrTitle($user->employee)) {
             $roles[] = 'hr-manager';
         }
+        // Platform admins are users with tenant_id NULL + the
+        // platform_admin flag (decision D-14); the flag grants the role.
+        if (! empty($user->platform_admin) && ! in_array('platform-admin', $roles, true)) {
+            $roles[] = 'platform-admin';
+        }
 
         return array_values(array_unique($roles));
     }
@@ -140,6 +173,7 @@ abstract class Controller extends BaseController
             \App\Models\AuditLog::create([
                 'user_id' => $this->user()->id ?? null,
                 'user_name' => $this->user()->name ?? null,
+                'tenant_id' => \App\Support\TenantContext::id() ?? $this->user()->tenant_id ?? null,
                 'action' => $action,
                 'resource_type' => $resourceType,
                 'resource_id' => $resourceId !== null ? (string) $resourceId : null,
@@ -148,6 +182,12 @@ abstract class Controller extends BaseController
         } catch (\Throwable) {
             // Audit logging is best-effort by design.
         }
+    }
+
+    /** The tenant resolved for this request (BRD §2.2), or null. */
+    protected function tenantId(): ?int
+    {
+        return \App\Support\TenantContext::id();
     }
 
     protected function forbidden()

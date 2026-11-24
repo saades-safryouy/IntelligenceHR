@@ -13,11 +13,16 @@ class AuditLog extends Model
 
     protected function casts(): array
     {
-        return ['details' => 'array'];
+        return ['details' => 'array', 'tenant_id' => 'integer'];
     }
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }

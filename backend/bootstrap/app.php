@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Sanctum stateful SPA auth for the /api routes (cookie session).
         // statefulApi() prepends EnsureFrontendRequestsAreStateful.
         $middleware->statefulApi();
+        // Tenant resolution (Payroll P1, BRD §2.2): the middleware runs
+        // after auth:sanctum on the authenticated route group.
+        $middleware->alias(['tenant' => \App\Http\Middleware\ResolveTenant::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Unauthenticated API requests must get a 401 JSON response, not a

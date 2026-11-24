@@ -47,6 +47,8 @@ class ApiPresenter
                 'name' => $user->name,
                 'email' => $user->email,
                 'employeeId' => $user->employee_id,
+                'tenantId' => $user->tenant_id,
+                'platformAdmin' => (bool) ($user->platform_admin ?? false),
             ],
             'employee' => $employee ? [
                 'id' => $employee->id,

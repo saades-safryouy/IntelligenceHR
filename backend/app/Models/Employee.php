@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
+
+    // NOTE (Payroll P1, BRD §9.3 rule 8): cnss_number is stored as
+    // plaintext with a per-tenant unique index in P1. The encrypted
+    // cast (§9.3) is deferred to P3: Laravel's encrypted cast
+    // randomises ciphertext, so it cannot share a column with a DB
+    // unique index — the P3 plan is a separate deterministic hash
+    // column for uniqueness plus the encrypted cast for storage.
+    // Salary data itself never lives here (§9.3 rule 2).
 
     protected $guarded = [];
 
@@ -18,6 +27,8 @@ class Employee extends Model
             'passport_validity_date' => 'date',
             'personal_info_completed_at' => 'datetime',
             'personal_info_dismissed_until' => 'datetime',
+            'spouse_dependent' => 'boolean',
+            'dependants_count' => 'integer',
         ];
     }
 

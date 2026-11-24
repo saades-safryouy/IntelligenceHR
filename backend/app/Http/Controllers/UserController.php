@@ -12,10 +12,12 @@ class UserController extends Controller
     /** Role keys HR may assign (permissionsFor() is the source of truth). */
     private const ASSIGNABLE_ROLES = [
         'hr-admin', 'hr-manager', 'department-manager', 'manager',
-        'workflow-approver', 'employee', 'local-it', 'isd',
+        'workflow-approver', 'employee', 'local-it', 'isd', 'tenant-admin',
     ];
 
-    /** Only a super-admin may grant these. */
+    /** Only a super-admin may grant these. 'platform-admin' is in neither
+     * list on purpose: it is granted directly by the platform team, never
+     * through the roles API (decision D-14). */
     private const PROTECTED_ROLES = ['super-admin', 'bootstrap-admin'];
 
     public function index()

@@ -19,6 +19,7 @@ use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\PerformanceReview;
 use App\Models\ReviewCycle;
+use App\Models\Tenant;
 use App\Models\TrainingCourse;
 use App\Models\TrainingEnrollment;
 use App\Models\User;
@@ -31,13 +32,33 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // --- Seed tenant (Payroll P1, BRD §2.6): all pre-tenancy data
+        // belongs to "Demo Company". Every row created below carries its
+        // id, and the sweep at the end of this section backfills any
+        // row that missed it (e.g. users created by other paths).
+        $tenant = Tenant::firstOrCreate(['slug' => 'demo-company'], [
+            'name' => 'Demo Company',
+            'status' => 'active',
+            'default_jurisdiction' => 'MA',
+            'default_currency' => 'MAD',
+            'default_languages' => ['fr', 'ar'],
+        ]);
+        // tenant_id is deliberately not in User::$fillable (never from
+        // request input), so users get it via forceFill, not mass
+        // assignment.
+        $assignTenantToUser = function (User $user) use ($tenant): void {
+            if ($user->tenant_id === null) {
+                $user->forceFill(['tenant_id' => $tenant->id])->save();
+            }
+        };
+
         // --- Departments (ids are the short strings the frontend seeds use) ---
         $departments = [
-            ['id' => 'eng', 'name' => 'Engineering', 'code' => 'ENG', 'employee_count' => 64, 'budget' => 1200000],
-            ['id' => 'ops', 'name' => 'Operations', 'code' => 'OPS', 'employee_count' => 48, 'budget' => 800000],
-            ['id' => 'sales', 'name' => 'Commercial', 'code' => 'SAL', 'employee_count' => 37, 'budget' => 950000],
-            ['id' => 'finance', 'name' => 'Finance', 'code' => 'FIN', 'employee_count' => 21, 'budget' => 500000],
-            ['id' => 'people', 'name' => 'People & Culture', 'code' => 'PPL', 'employee_count' => 14, 'budget' => 300000],
+            ['id' => 'eng', 'name' => 'Engineering', 'code' => 'ENG', 'employee_count' => 64, 'budget' => 1200000, 'tenant_id' => $tenant->id],
+            ['id' => 'ops', 'name' => 'Operations', 'code' => 'OPS', 'employee_count' => 48, 'budget' => 800000, 'tenant_id' => $tenant->id],
+            ['id' => 'sales', 'name' => 'Commercial', 'code' => 'SAL', 'employee_count' => 37, 'budget' => 950000, 'tenant_id' => $tenant->id],
+            ['id' => 'finance', 'name' => 'Finance', 'code' => 'FIN', 'employee_count' => 21, 'budget' => 500000, 'tenant_id' => $tenant->id],
+            ['id' => 'people', 'name' => 'People & Culture', 'code' => 'PPL', 'employee_count' => 14, 'budget' => 300000, 'tenant_id' => $tenant->id],
         ];
         foreach ($departments as $d) {
             Department::updateOrCreate(['id' => $d['id']], $d);
@@ -70,7 +91,7 @@ class DatabaseSeeder extends Seeder
                 'gender' => $p['gender'], 'country' => $p['country'],
                 'location' => $p['location'], 'joined_at' => $p['joined_at'],
                 'employment_type' => 'Full-time', 'status' => 'Active',
-                'nationality_id' => 1,
+                'nationality_id' => 1, 'tenant_id' => $tenant->id,
             ]);
             $user = User::updateOrCreate(['email' => $p['email']], [
                 'name' => $p['first_name'].' '.$p['last_name'],
@@ -78,6 +99,7 @@ class DatabaseSeeder extends Seeder
                 'roles' => $p['roles'],
                 'employee_id' => $employee->id,
             ]);
+            $assignTenantToUser($user);
             $employee->update(['user_id' => $user->id]);
         }
 
@@ -98,22 +120,31 @@ class DatabaseSeeder extends Seeder
             ['email' => 'demo.manager.01@intelligence-rh.example.test', 'name' => 'Demo Manager', 'roles' => ['manager'], 'employee_id' => null],
             ['email' => 'demo.employee.01@intelligence-rh.example.test', 'name' => 'Demo Employee', 'roles' => ['employee'], 'employee_id' => 1047],
         ] as $demo) {
-            User::updateOrCreate(['email' => $demo['email']], [
+            $demoUser = User::updateOrCreate(['email' => $demo['email']], [
                 'name' => $demo['name'],
                 'password' => Hash::make($password),
                 'roles' => $demo['roles'],
                 'employee_id' => $demo['employee_id'],
             ]);
+            $assignTenantToUser($demoUser);
         }
 
         // Super-admin from env (only when ADMIN_EMAIL/ADMIN_PASSWORD are set).
         if (env('ADMIN_EMAIL') && env('ADMIN_PASSWORD')) {
-            User::updateOrCreate(['email' => env('ADMIN_EMAIL')], [
+            $admin = User::updateOrCreate(['email' => env('ADMIN_EMAIL')], [
                 'name' => 'Super Admin',
                 'password' => Hash::make(env('ADMIN_PASSWORD')),
                 'roles' => ['super-admin'],
             ]);
+            $assignTenantToUser($admin);
         }
+
+        // Safety sweep: any row that still has no tenant (created by a
+        // path that missed the assignment above) joins the seed tenant.
+        User::whereNull('tenant_id')->update(['tenant_id' => $tenant->id]);
+        Employee::whereNull('tenant_id')->update(['tenant_id' => $tenant->id]);
+        Department::whereNull('tenant_id')->update(['tenant_id' => $tenant->id]);
+        \App\Models\AuditLog::whereNull('tenant_id')->update(['tenant_id' => $tenant->id]);
 
         // --- Leave entitlements (annual 25 / sick 12 / unpaid 30) ---
         foreach (Employee::all() as $employee) {

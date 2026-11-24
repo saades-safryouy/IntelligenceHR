@@ -25,12 +25,17 @@ use Illuminate\Support\Facades\Route;
  * X-XSRF-TOKEN header, credentials:include). No Bearer tokens.
  * Envelopes are mixed per the API contract: single resources {data},
  * some lists bare {data, page, pageSize, total}.
+ *
+ * The 'tenant' middleware (ResolveTenant) runs after auth:sanctum on
+ * every authenticated route: it resolves the current tenant from the
+ * authenticated user (users.tenant_id) for the global tenant scopes.
+ * It binds context only — it never blocks a request.
  */
 
 Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login']);
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::get('me/permissions', [AuthController::class, 'permissions']);
