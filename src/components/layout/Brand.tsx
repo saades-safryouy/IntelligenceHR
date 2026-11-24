@@ -16,18 +16,18 @@ export function Brand({
       <div className="brand-mark">
         <img
           src={theme === 'light' && !darkSurface ? logo : lightLogo}
-          alt="IntillegenceHR"
+          alt="IntelligenceHR"
         />
       </div>
 
       {!compact && (
         <div>
           <strong>
-            Intillgence<span>HR</span>
+            Intelligence<span>HR</span>
           </strong>
 
           <small>
-            INTILLIGENCE AGENCY
+            INTELLIGENCE AGENCY
           </small>
         </div>
       )}
