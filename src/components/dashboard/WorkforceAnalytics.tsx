@@ -17,12 +17,12 @@ const WEEK_START = 0
 
 // Colours are CSS variables from WorkforceAnalytics.css, so they follow the theme.
 const seriesColors = [
-  'var(--wa-c1)',
-  'var(--wa-c5)',
-  'var(--wa-c2)',
-  'var(--wa-c3)',
-  'var(--wa-c4)',
-  'var(--wa-c6)',
+  'var(--wa-c1, #3b82f6)',
+  'var(--wa-c5, #22b8cf)',
+  'var(--wa-c2, #8b7cf6)',
+  'var(--wa-c3, #34d399)',
+  'var(--wa-c4, #fbbf24)',
+  'var(--wa-c6, #ec6aa6)',
 ]
 
 // -----------------------------------------------------------------------------
@@ -440,11 +440,11 @@ export function GrowthChartCard({
           </div>
           <div className="ref-legend-chips">
             <span className="ref-legend-chip">
-              <i style={{ background: 'var(--wa-accent)' }} />
+              <i style={{ background: 'var(--wa-accent, #287be9)' }} />
               {t.headcount}
             </span>
             <span className="ref-legend-chip">
-              <i style={{ background: 'var(--wa-warning)' }} />
+              <i style={{ background: 'var(--wa-warning, #d97706)' }} />
               {t.newHires}
             </span>
           </div>
