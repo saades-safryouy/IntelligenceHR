@@ -8,6 +8,7 @@ import {
   BarChart3,
   Settings,
   BriefcaseBusiness,
+  Building2,
   Clock3,
   GraduationCap,
   WalletCards,
@@ -35,6 +36,11 @@ export const navItems: NavItem[] = [
     to: '/app/employees',
     label: 'people',
     icon: Users,
+  },
+  {
+    to: '/app/departments',
+    label: 'departments',
+    icon: Building2,
   },
   {
     to: '/app/organigramme',

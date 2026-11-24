@@ -25,6 +25,7 @@ import {
   leaveRequestRepository,
 } from '../../data/mockRepository'
 import { getEmployees, getHolidays, getLeaveRequests } from '../../data/employeeStore'
+import { apiCalendarEventRepository } from '../../data/apiDomainRepositories'
 import { isApiDataMode } from '../../lib/apiClient'
 import { useI18n } from '../../contexts/I18nContext'
 import { useEmployeeStore } from '../../hooks/useEmployeeStore'
@@ -396,18 +397,23 @@ export function CalendarPage() {
   const [active, setActive] = useState<Set<Category>>(() => new Set(CATEGORY_ORDER))
   const [department, setDepartment] = useState('all')
   const [query, setQuery] = useState('')
-  const [custom, setCustom] = useState<UserEvent[]>(loadUserEvents)
+  const [custom, setCustom] = useState<UserEvent[]>(() => (isApiDataMode ? [] : loadUserEvents()))
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [form, setForm] = useState({ title: '', type: EVENT_TYPES[0], start: '', end: '', note: '' })
   const [formError, setFormError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let live = true
-    if (isApiDataMode) setIsLoading(true)
+    if (isApiDataMode) {
+      setIsLoading(true)
+      setLoadError('')
+    }
     Promise.all([
-      employeeRepository.list().catch(() => ({ data: getEmployees() })),
-      leaveRequestRepository.list().catch(() => ({ data: getLeaveRequests() })),
-      holidayRepository.list().catch(() => ({ data: getHolidays() })),
+      employeeRepository.list(),
+      leaveRequestRepository.list(),
+      holidayRepository.list(),
     ])
       .then(([employeeRes, leaveRes, holidayRes]) => {
         if (!live) return
@@ -418,19 +424,29 @@ export function CalendarPage() {
       .catch((err: unknown) => {
         console.error('Failed to load calendar data:', err)
         if (!live) return
-        setEmployees(getEmployees())
-        setLeaveRequests(getLeaveRequests())
-        setHolidays(getHolidays())
+        // Never fall back to mock seed data: an error state is honest,
+        // fake data is not.
+        setLoadError('Could not load the calendar. Check your connection and try again.')
       })
       .finally(() => {
         if (live) setIsLoading(false)
       })
+    // Custom events live on the server in API mode (localStorage in mock mode).
+    if (isApiDataMode) {
+      apiCalendarEventRepository
+        .list()
+        .then((events) => {
+          if (live) setCustom(events)
+        })
+        .catch((err: unknown) => console.error('Failed to load calendar events:', err))
+    }
     return () => {
       live = false
     }
-  }, [])
+  }, [reloadKey])
 
   useEffect(() => {
+    if (isApiDataMode) return // server-backed in API mode
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(custom))
     } catch {
@@ -613,22 +629,32 @@ export function CalendarPage() {
     setDrawerOpen(true)
   }
 
-  const saveEvent = () => {
+  const saveEvent = async () => {
     const titleText = form.title.trim()
     if (!titleText) return setFormError('Please enter a title.')
     if (!form.start) return setFormError('Please choose a start date.')
     if (form.end && form.end < form.start) return setFormError('The end date cannot be before the start date.')
-    setCustom((current) => [
-      ...current,
-      {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        title: titleText,
-        type: form.type,
-        start: form.start,
-        end: form.end || form.start,
-        note: form.note.trim(),
-      },
-    ])
+    const record = {
+      title: titleText,
+      type: form.type,
+      start: form.start,
+      end: form.end || form.start,
+      note: form.note.trim(),
+    }
+    if (isApiDataMode) {
+      try {
+        const created = await apiCalendarEventRepository.create(record)
+        setCustom((current) => [...current, created])
+      } catch (err) {
+        console.error('Failed to save calendar event:', err)
+        return setFormError(err instanceof Error ? err.message : 'Could not save the event.')
+      }
+    } else {
+      setCustom((current) => [
+        ...current,
+        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ...record },
+      ])
+    }
     const start = parseDay(form.start)
     if (start) {
       setCursor(start)
@@ -637,9 +663,17 @@ export function CalendarPage() {
     setDrawerOpen(false)
   }
 
-  const removeEvent = (event: CalEvent) => {
+  const removeEvent = async (event: CalEvent) => {
     if (!event.custom) return
     const id = event.id.replace(/^custom-/, '')
+    if (isApiDataMode) {
+      try {
+        await apiCalendarEventRepository.remove(id)
+      } catch (err) {
+        console.error('Failed to delete calendar event:', err)
+        return
+      }
+    }
     setCustom((current) => current.filter((item) => item.id !== id))
   }
 
@@ -700,6 +734,15 @@ export function CalendarPage() {
           Add event
         </button>
       </PageHeader>
+
+      {loadError && (
+        <div className="hc-error" role="alert">
+          {loadError}
+          <button type="button" className="button secondary" onClick={() => setReloadKey((k) => k + 1)}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="directory-summary">
         <div>

@@ -1,0 +1,140 @@
+/* Departments page — table + form, using the app's shared tokens. */
+
+.dept-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--red, #dc2626);
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--red, #dc2626) 8%, transparent);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.dept-form {
+  margin-block-end: 16px;
+  padding: 20px;
+}
+
+.dept-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 8px;
+}
+
+.dept-form-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.dept-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.dept-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dept-form-grid label input,
+.dept-form-grid label select {
+  font-weight: 400;
+}
+
+.dept-span {
+  grid-column: 1 / -1;
+}
+
+.dept-check {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.dept-form-error {
+  margin: 12px 0 0;
+  color: var(--red, #dc2626);
+  font-size: 13px;
+}
+
+.dept-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.dept-panel {
+  padding: 8px 20px 20px;
+  overflow-x: auto;
+}
+
+.dept-empty {
+  padding: 32px 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.dept-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dept-table th,
+.dept-table td {
+  padding: 12px 8px;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.dept-table th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dept-table td strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dept-table td small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dept-actions {
+  white-space: nowrap;
+  text-align: end;
+}
+
+.dept-confirm {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background-color: var(--surface);
+}
+
+.dept-confirm p {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}

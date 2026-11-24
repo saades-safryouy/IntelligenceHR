@@ -81,17 +81,42 @@ function toApiLeaveRequest(item: ApiLeaveRequest): LeaveRequest {
   }
 }
 
+function toApiDepartment(item: any): Department {
+  return {
+    id: item.id?.toString() ?? '',
+    name: item.name ?? '',
+    code: item.code ?? '',
+    manager: item.manager ?? '',
+    managerId: item.manager_id ?? null,
+    description: item.description ?? '',
+    employeeCount: item.employee_count ?? 0,
+    budget: item.budget ?? '$0',
+    parentId: item.parent_id ?? null,
+    isActive: item.is_active ?? true,
+  }
+}
+
+function toApiDepartmentBody(input: Partial<Department> & { id?: string }) {
+  const budgetNumber =
+    typeof input.budget === 'string'
+      ? Number(input.budget.replace(/[^0-9.]/g, '')) || null
+      : (input.budget ?? null)
+  return {
+    id: input.id ?? undefined,
+    name: input.name,
+    code: input.code ?? null,
+    description: input.description ?? null,
+    manager_id: input.managerId ?? null,
+    budget: budgetNumber,
+    parent_id: input.parentId ?? null,
+    is_active: input.isActive ?? true,
+  }
+}
+
 export const apiDepartmentRepository: MockRepository<Department> = {
   async list(): Promise<RepositoryPage<Department>> {
     const response = await apiData<any[]>('/api/v1/departments')
-    const data: Department[] = response.map((item) => ({
-      id: item.id?.toString() ?? '',
-      name: item.name ?? '',
-      code: item.code ?? '',
-      manager: item.manager ?? '',
-      employeeCount: item.employee_count ?? 0,
-      budget: item.budget ?? '$0',
-    }))
+    const data: Department[] = response.map(toApiDepartment)
     return { data, page: 1, pageSize: data.length, total: data.length }
   },
   async get(id) {
@@ -99,36 +124,78 @@ export const apiDepartmentRepository: MockRepository<Department> = {
     return list.data.find((d) => d.id === id) ?? null
   },
   async create(input) {
+    // The backend needs a short string id (e.g. "eng"); the page passes it
+    // through the input object even though the repository type omits it.
     const res = await apiData<any>('/api/v1/departments', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify(toApiDepartmentBody(input as Partial<Department> & { id?: string })),
     })
-    return {
-      id: res.id?.toString() ?? '',
-      name: res.name ?? '',
-      code: res.code ?? '',
-      manager: res.manager ?? '',
-      employeeCount: res.employee_count ?? 0,
-      budget: res.budget ?? '$0',
-    }
+    return toApiDepartment(res)
   },
   async update(id, input) {
     const res = await apiData<any>(`/api/v1/departments/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(input),
+      body: JSON.stringify(toApiDepartmentBody(input)),
     })
-    return {
-      id: res.id?.toString() ?? '',
-      name: res.name ?? '',
-      code: res.code ?? '',
-      manager: res.manager ?? '',
-      employeeCount: res.employee_count ?? 0,
-      budget: res.budget ?? '$0',
-    }
+    return toApiDepartment(res)
   },
   async delete(id) {
     await apiData(`/api/v1/departments/${id}`, { method: 'DELETE' })
     return true
+  },
+}
+
+/** Calendar custom events — server-backed (see /api/v1/calendar-events). */
+export interface CalendarEventRecord {
+  id: string
+  title: string
+  type: string
+  start: string // YYYY-MM-DD
+  end: string // YYYY-MM-DD
+  note: string
+}
+
+interface ApiCalendarEvent {
+  id: number | string
+  user_id: string | null
+  title: string
+  type: string
+  start_date: string
+  end_date: string
+  note: string | null
+}
+
+function toCalendarEventRecord(item: ApiCalendarEvent): CalendarEventRecord {
+  return {
+    id: String(item.id),
+    title: item.title ?? '',
+    type: item.type ?? 'Company event',
+    start: item.start_date ?? '',
+    end: item.end_date ?? item.start_date ?? '',
+    note: item.note ?? '',
+  }
+}
+
+export const apiCalendarEventRepository = {
+  async list(): Promise<CalendarEventRecord[]> {
+    const response = await apiData<ApiCalendarEvent[]>('/api/v1/calendar-events')
+    return response.map(toCalendarEventRecord)
+  },
+  async create(input: Omit<CalendarEventRecord, 'id'>): Promise<CalendarEventRecord> {
+    const res = await apiData<ApiCalendarEvent>('/api/v1/calendar-events', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: input.title,
+        type: input.type,
+        start_date: input.start,
+        end_date: input.end,
+        note: input.note,
+      }),
+    })
+    return toCalendarEventRecord(res)
+  },
+  async remove(id: string): Promise<void> {
+    await apiData(`/api/v1/calendar-events/${id}`, { method: 'DELETE' })
   },
 }
 

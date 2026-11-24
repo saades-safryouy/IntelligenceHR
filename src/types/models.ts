@@ -16,6 +16,12 @@ export interface Department {
   code?: string
   isActive?: boolean
   parentDepartmentId?: string | null
+  /** API fields (see apiDepartmentRepository). */
+  manager?: string
+  managerId?: number | null
+  description?: string
+  budget?: string
+  parentId?: string | null
 }
 
 export interface Employee {
@@ -135,6 +141,10 @@ export interface LeaveType {
   nameKey: string
   color: string
   paid: boolean
+  /** Policy fields (admin-managed, see GET /api/v1/leave-types). */
+  defaultEntitlementDays?: number
+  carryOverDays?: number
+  requiresApproval?: boolean
 }
 
 export interface EmployeeLeaveEntitlement {

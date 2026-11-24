@@ -7,6 +7,7 @@ import { AttendancePage } from '../pages/attendance/AttendancePage'
 import { AutomationsPage } from '../pages/automations/AutomationsPage'
 import { CalendarPage } from '../pages/calendar/CalendarPage'
 import { DashboardPage } from '../pages/dashboard/DashboardPage'
+import { DepartmentsPage } from '../pages/departments/DepartmentsPage'
 import { DocumentsPage } from '../pages/documents/DocumentsPage'
 import { HolidaysPage } from '../pages/holidays/HolidaysPage'
 import { AskIntelligencePage } from '../pages/intelligence/AskIntelligencePage'
@@ -49,6 +50,7 @@ export function renderHrRoutes(shell: LayoutShellProps) {
       <Route path="dashboard" element={<DashboardPage />} />
       <Route path="analytics" element={<AnalyticsPage />} />
       <Route path="employees" element={<PeoplePage />} />
+      <Route path="departments" element={<DepartmentsPage />} />
       <Route path="employees/:employeeId" element={<EmployeeShowcasePage />} />
       <Route path="organigramme" element={<OrganigrammePage />} />
       <Route path="onboarding/requests" element={<OnboardingPage />} />

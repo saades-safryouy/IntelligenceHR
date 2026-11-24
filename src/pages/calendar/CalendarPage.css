@@ -570,3 +570,17 @@
   .hc-chip,
   .hc-icon-btn { transition: none; }
 }
+/* Load-error banner (replaces the old silent mock fallback). */
+.hc-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--red, #dc2626);
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--red, #dc2626) 8%, transparent);
+  color: var(--text);
+  font-size: 14px;
+}

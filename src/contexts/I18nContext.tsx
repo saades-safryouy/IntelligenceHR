@@ -7,6 +7,7 @@ export const translations = {
   en: {
     dashboard: 'Dashboard',
     people: 'People',
+    departments: 'Departments',
     organigramme: 'Organigramme',
     workflows: 'Workflows',
     onboarding: 'Onboarding',
@@ -76,6 +77,7 @@ export const translations = {
   fr: {
     dashboard: 'Tableau de bord',
     people: 'Collaborateurs',
+    departments: 'Départements',
     organigramme: 'Organigramme',
     workflows: 'Flux de validation',
     onboarding: 'Intégration',
@@ -145,6 +147,7 @@ export const translations = {
   ar: {
     dashboard: 'لوحة التحكم',
     people: 'الموظفون',
+    departments: 'الأقسام',
     organigramme: 'الهيكل التنظيمي',
     workflows: 'سير العمل',
     onboarding: 'التهيئة',
