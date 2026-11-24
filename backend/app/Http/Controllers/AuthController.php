@@ -40,6 +40,6 @@ class AuthController extends Controller
 
     public function permissions()
     {
-        return response()->json(['data' => self::permissionsFor($this->user()->roles ?? [])]);
+        return response()->json(['data' => self::permissionsFor(self::effectiveRoles($this->user()))]);
     }
 }
