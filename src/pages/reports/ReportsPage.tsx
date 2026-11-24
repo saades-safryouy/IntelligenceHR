@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Component, useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Activity, AlertCircle, ArrowDownRight, ArrowUpRight, BriefcaseBusiness,
   CalendarDays, CheckCircle2, Clock3, FileWarning, RefreshCw, Users,
@@ -48,7 +48,28 @@ function Distribution({ title, rows }: { title: string; rows: Array<{ label: str
   return <Panel title={title} subtitle="Employee count by category"><DistributionBars rows={rows} /></Panel>
 }
 
+/**
+ * Catches render errors in the report content (e.g. a malformed payload)
+ * and shows a visible error card with Retry instead of unmounting the
+ * whole app into a blank page.
+ */
+class ReportsErrorBoundary extends Component<{ children: React.ReactNode; onRetry: () => void }, { failed: boolean; message: string }> {
+  state = { failed: false, message: '' }
+
+  static getDerivedStateFromError(error: unknown) {
+    return { failed: true, message: error instanceof Error ? error.message : 'The report could not be rendered.' }
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <div className="reports-error-card" role="alert"><AlertCircle size={19} /><div><strong>We couldn’t render these reports</strong><p>{this.state.message}</p></div><button type="button" onClick={() => { this.setState({ failed: false, message: '' }); this.props.onRetry() }}>Try again</button></div>
+    }
+    return this.props.children
+  }
+}
+
 function formatMonth(value: string) {
+  if (typeof value !== 'string') return String(value ?? '')
   const [year, month] = value.split('-').map(Number)
   if (!year || !month) return value
   return new Intl.DateTimeFormat(undefined, { month: 'short', year: '2-digit' }).format(new Date(year, month - 1, 1))
@@ -81,10 +102,10 @@ export function ReportsPage() {
     return () => { signal.active = false }
   }, [load, reload])
 
-  const statusRows = useMemo(() => data?.workforce.statusDistribution.map(row => ({ label: row.status, value: Number(row.total) })) ?? [], [data])
-  const departmentRows = useMemo(() => data?.workforce.departmentDistribution.map(row => ({ label: row.name, value: Number(row.total) })) ?? [], [data])
+  const statusRows = useMemo(() => data?.workforce.statusDistribution?.map(row => ({ label: row.status, value: Number(row.total) })) ?? [], [data])
+  const departmentRows = useMemo(() => data?.workforce.departmentDistribution?.map(row => ({ label: row.name, value: Number(row.total) })) ?? [], [data])
   const leaveStatusRows = useMemo(() => Object.entries(data?.leave.byStatus ?? {}).map(([label, value]) => ({ label, value: Number(value) })), [data])
-  const hireSourceRows = useMemo(() => data ? [{ label: 'Internal', value: data.hires.internalVsExternal.internal }, { label: 'External', value: data.hires.internalVsExternal.external }] : [], [data])
+  const hireSourceRows = useMemo(() => data?.hires?.internalVsExternal ? [{ label: 'Internal', value: data.hires.internalVsExternal.internal }, { label: 'External', value: data.hires.internalVsExternal.external }] : [], [data])
   const dateInvalid = Boolean(from && to && from > to)
 
   if (!isApiDataMode) return <div className="reports-page"><PageHeader eyebrow="REPORTS" title="HR reports" subtitle="Reports require the connected API." /></div>
@@ -118,7 +139,7 @@ export function ReportsPage() {
     {!loading && error && <div className="reports-error-card" role="alert"><AlertCircle size={19} /><div><strong>We couldn’t load these reports</strong><p>{error}</p></div><button type="button" onClick={() => setReload(value => value + 1)}>Try again</button></div>}
     {!loading && !error && !data && <div className="reports-state">Reports are unavailable.</div>}
 
-    {!loading && !error && data && <>
+    {!loading && !error && data && <ReportsErrorBoundary key={tab} onRetry={() => { setLoading(true); setError(''); setReload(value => value + 1) }}>
       {tab === 'workforce' && <>
         <div className="reports-kpi-grid">
           <Metric label="Total headcount" value={String(data.workforce.headcount)} note={`${data.workforce.active} active employees`} icon={<Users size={18} />} />
@@ -151,10 +172,10 @@ export function ReportsPage() {
 
       {tab === 'lifecycle' && <div className="reports-grid"><Panel title="Onboarding" subtitle="New employee experience"><StatRow label="Active cases" value={data.lifecycle.onboarding.active} /><StatRow label="Completed cases" value={data.lifecycle.onboarding.completed} /><StatRow label="Average duration" value={data.lifecycle.onboarding.avgDays === null ? '—' : `${data.lifecycle.onboarding.avgDays} days`} /></Panel><Panel title="Offboarding" subtitle="Employee exit process"><StatRow label="Active cases" value={data.lifecycle.offboarding.active} /><StatRow label="Completed cases" value={data.lifecycle.offboarding.completed} /><StatRow label="Average duration" value={data.lifecycle.offboarding.avgDays === null ? '—' : `${data.lifecycle.offboarding.avgDays} days`} /></Panel><Panel title="Retention & turnover" subtitle="Based on employee records in scope"><div className="reports-rate-pair"><div><span>Retention</span><strong>{data.lifecycle.retention.rate === null ? '—' : `${data.lifecycle.retention.rate}%`}</strong></div><div><span>Turnover</span><strong>{data.lifecycle.retention.turnover === null ? '—' : `${data.lifecycle.retention.turnover}%`}</strong></div></div>{data.offboarding.reasons.length > 0 && <div className="reports-reasons"><h3>Recorded exit reasons</h3>{data.offboarding.reasons.slice(0, 5).map(row => <div className="reports-reason-item" key={row.reason}><span>{row.reason}</span><strong>{row.total}</strong></div>)}</div>}</Panel></div>}
 
-      {tab === 'operations' && <div className="reports-grid"><Panel title="Document operations" subtitle="Employee document review and expiry"><StatRow label="Total documents" value={data.operations.documents.total} /><StatRow label="Pending review" value={data.operations.documents.pending} /><StatRow label="Expired documents" value={data.operations.documents.expired} /><div className="reports-compliance"><div><span>Document compliance</span><strong>{data.operations.compliance.rate === null ? '—' : `${data.operations.compliance.rate}%`}</strong></div>{data.operations.compliance.rate !== null && <div className="reports-compliance-track"><i style={{ width: `${Math.max(0, Math.min(100, data.operations.compliance.rate))}%` }} /></div>}</div></Panel><Panel title="Workflow activity" subtitle="Workflow records in the selected period"><div className="reports-feature-metric"><BriefcaseBusiness size={21} /><strong>{data.operations.automation.workflows}</strong><span>workflows</span><small>{data.operations.automation.automationRate === null ? 'No workflow records in this period.' : `${data.operations.automation.automationRate}% recorded automation rate`}</small></div><div className="reports-divider" /><StatRow label="Overdue workflow steps" value={data.workflow.overdueSteps ?? '—'} /><StatRow label="Average completion time" value={data.workflow.averageCompletionHours === null ? '—' : `${data.workflow.averageCompletionHours} hrs`} /></Panel></div>}
+      {tab === 'operations' && <div className="reports-grid"><Panel title="Document operations" subtitle="Employee document review and expiry"><StatRow label="Total documents" value={data.operations.documents.total} /><StatRow label="Pending review" value={data.operations.documents.pending} /><StatRow label="Expired documents" value={data.operations.documents.expired} /><div className="reports-compliance"><div><span>Document compliance</span><strong>{data.operations.compliance.rate === null ? '—' : `${data.operations.compliance.rate}%`}</strong></div>{data.operations.compliance.rate !== null && <div className="reports-compliance-track"><i style={{ width: `${Math.max(0, Math.min(100, data.operations.compliance.rate))}%` }} /></div>}</div></Panel><Panel title="Workflow activity" subtitle="Workflow records in the selected period"><div className="reports-feature-metric"><BriefcaseBusiness size={21} /><strong>{data.operations.automation.workflows}</strong><span>workflows</span><small>{data.operations.automation.automationRate === null ? (data.operations.automation.workflows > 0 ? 'Automation rate is not tracked for these workflows.' : 'No workflow records in this period.') : `${data.operations.automation.automationRate}% recorded automation rate`}</small></div><div className="reports-divider" /><StatRow label="Overdue workflow steps" value={data.workflow.overdueSteps ?? '—'} /><StatRow label="Average completion time" value={data.workflow.averageCompletionHours === null ? '—' : `${data.workflow.averageCompletionHours} hrs`} /></Panel></div>}
 
-      {Object.keys(data.limitations).length > 0 && <div className="reports-limitations"><FileWarning size={16} /><div>{Object.values(data.limitations).map(message => <p key={message}>{message}</p>)}</div></div>}
-    </>}
+      {Object.keys(data.limitations ?? {}).length > 0 && <div className="reports-limitations"><FileWarning size={16} /><div>{Object.values(data.limitations ?? {}).map(message => <p key={message}>{message}</p>)}</div></div>}
+    </ReportsErrorBoundary>}
   </div>
 }
 
@@ -163,12 +184,12 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 }
 
 function DistributionBars({ rows }: { rows: Array<{ label: string; value: number }> }) {
-  if (!rows.length) return <EmptyChart />
+  if (!rows?.length) return <EmptyChart />
   const max = Math.max(1, ...rows.map(row => row.value))
   return <div className="reports-bars-list">{rows.map((row, index) => <div className="reports-bar-row" key={row.label}><div className="reports-bar-label"><span>{row.label}</span><strong>{row.value}</strong></div><div className="reports-bar-track"><i style={{ width: `${Math.round(row.value / max * 100)}%`, background: chartColors[index % chartColors.length] }} /></div></div>)}</div>
 }
 
 function YearChart({ rows, cumulative = false }: { rows: Array<{ year: string; total: number }>; cumulative?: boolean }) {
-  if (!rows.length) return <EmptyChart message="No hire records were found for this period." />
+  if (!rows?.length) return <EmptyChart message="No hire records were found for this period." />
   return <ChartFrame height={320}><ResponsiveContainer width="100%" height="100%"><BarChart data={rows} margin={{ top: 12, right: 12, left: -18, bottom: 0 }}><CartesianGrid stroke="var(--line)" vertical={false} /><XAxis dataKey="year" tick={axisStyle} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="total" name={cumulative ? 'Cumulative hires' : 'Hires'} fill="#7891aa" radius={[3, 3, 0, 0]} /></BarChart></ResponsiveContainer></ChartFrame>
 }
