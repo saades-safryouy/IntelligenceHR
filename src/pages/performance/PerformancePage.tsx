@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import PageHeader from '../../components/PageHeader'
-import StatusBadge from '../../components/StatusBadge'
-import { useI18n } from '../../contexts/i18nHooks'
+import { PageHeader } from '../../components/common/PageHeader'
+import { StatusBadge } from '../../components/employees/StatusBadge'
+import { useI18n } from '../../contexts/I18nContext'
 import { useAuth } from '../../contexts/authHooks'
 import type { Employee, Goal, PerformanceReview, ReviewCycle } from '../../types/models'
 import { employeeRepository, performanceActions } from '../../data/mockRepository'
@@ -61,7 +61,7 @@ function ratingStars(rating: number | null): string {
 }
 
 export function PerformancePage(): React.JSX.Element {
-  const { t } = useI18n()
+  const { text: t } = useI18n()
   const { currentUser, isHR, hasPermission } = useAuth()
   const [tab, setTab] = useState<Tab>('reviews')
   const [loading, setLoading] = useState(true)
@@ -104,7 +104,7 @@ export function PerformancePage(): React.JSX.Element {
       setCycles(cycleList)
       setReviews(reviewList)
       setGoals(goalList)
-      setEmployees(employeeList)
+      setEmployees(employeeList.data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load performance data.')
     } finally {
