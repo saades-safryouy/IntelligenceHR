@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import PageHeader from '../../components/PageHeader'
-import StatusBadge from '../../components/StatusBadge'
-import { useI18n } from '../../contexts/i18nHooks'
+import { PageHeader } from '../../components/common/PageHeader'
+import { StatusBadge } from '../../components/employees/StatusBadge'
+import { useI18n } from '../../contexts/I18nContext'
 import { useAuth } from '../../contexts/authHooks'
 import type { Candidate, Department, Interview, Job, JobApplication } from '../../types/models'
 import { departmentRepository, recruitmentActions } from '../../data/mockRepository'
@@ -56,7 +56,7 @@ function emptyInterviewForm(): { scheduledAt: string; interviewer: string; notes
 }
 
 export function RecruitmentPage(): React.JSX.Element {
-  const { t } = useI18n()
+  const { text: t } = useI18n()
   const { isHR } = useAuth()
   const [tab, setTab] = useState<Tab>('pipeline')
   const [loading, setLoading] = useState(true)
@@ -98,7 +98,7 @@ export function RecruitmentPage(): React.JSX.Element {
         recruitmentActions.listInterviews(),
       ])
       setJobs(jobList)
-      setDepartments(deptList)
+      setDepartments(deptList.data)
       setCandidates(candidateList)
       setApplications(applicationList)
       setInterviews(interviewList)
