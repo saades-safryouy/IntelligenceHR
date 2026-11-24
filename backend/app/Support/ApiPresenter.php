@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\AttendanceRecord;
 use App\Models\AuditLog;
 use App\Models\CalendarEvent;
 use App\Models\Department;
@@ -175,6 +176,49 @@ class ApiPresenter
             'resource_id' => $l->resource_id,
             'details' => $l->details,
             'created_at' => $l->created_at?->toISOString(),
+        ];
+    }
+
+    public static function attendanceRecord(AttendanceRecord $r): array
+    {
+        return [
+            'id' => (string) $r->id,
+            'employee_id' => $r->employee_id,
+            'employee' => $r->employee ? $r->employee->first_name.' '.$r->employee->last_name : null,
+            'date' => $r->date?->toDateString(),
+            'check_in' => $r->check_in ? substr((string) $r->check_in, 0, 5) : null,
+            'check_out' => $r->check_out ? substr((string) $r->check_out, 0, 5) : null,
+            'status' => $r->status,
+            'hours_worked' => $r->hours_worked !== null ? (float) $r->hours_worked : null,
+            'validated' => (bool) $r->validated,
+            'validated_by' => $r->validated_by ? (string) $r->validated_by : null,
+            'notes' => $r->notes,
+            'source' => 'record',
+            'leave_request_id' => null,
+            'created_at' => $r->created_at?->toISOString(),
+            'updated_at' => $r->updated_at?->toISOString(),
+        ];
+    }
+
+    /** Read-only row merged from an approved leave request (no duplicate data). */
+    public static function attendanceLeaveRow(LeaveRequest $leave, string $date): array
+    {
+        return [
+            'id' => 'leave-'.$leave->id.'-'.$date,
+            'employee_id' => $leave->employee_id,
+            'employee' => $leave->employee ? $leave->employee->first_name.' '.$leave->employee->last_name : null,
+            'date' => $date,
+            'check_in' => null,
+            'check_out' => null,
+            'status' => 'leave',
+            'hours_worked' => null,
+            'validated' => true,
+            'validated_by' => null,
+            'notes' => 'Approved leave'.($leave->leaveType ? ' ('.$leave->leaveType->name_key.')' : ''),
+            'source' => 'leave',
+            'leave_request_id' => (string) $leave->id,
+            'created_at' => null,
+            'updated_at' => null,
         ];
     }
 

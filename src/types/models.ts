@@ -294,6 +294,24 @@ export interface TrainingEnrollment {
   completedAt: string | null
 }
 
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'leave'
+
+export interface AttendanceRecord {
+  id: string
+  employeeId: number
+  employee: string
+  date: string // YYYY-MM-DD
+  checkIn: string | null // HH:MM
+  checkOut: string | null // HH:MM
+  status: AttendanceStatus
+  hoursWorked: number | null
+  validated: boolean
+  validatedBy: string | null
+  notes: string
+  source: 'record' | 'leave'
+  leaveRequestId: string | null
+}
+
 export const NATIONALITIES: Record<number, { code: string; key: string }> = {
   1: { code: 'MA', key: 'nationalityMA' },
   2: { code: 'FR', key: 'nationalityFR' },

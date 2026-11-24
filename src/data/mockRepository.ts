@@ -22,7 +22,9 @@ import {
 import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
 import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions } from './apiDomainRepositories'
+import type { AttendanceFilters } from './apiDomainRepositories'
+import type { AttendanceRecord } from '../types/models'
 import { departments } from './mock'
 
 export type RepositoryOperation = 'list' | 'get' | 'create' | 'update' | 'delete'
@@ -251,6 +253,45 @@ export const trainingEnrollmentRepository = isApiDataMode
       update: (_id, _updates) => null,
       delete: () => true,
     })
+
+export const attendanceActions = isApiDataMode
+  ? apiAttendanceActions
+  : {
+      async list(_filters?: AttendanceFilters): Promise<AttendanceRecord[]> {
+        return []
+      },
+      async save(input: {
+        employeeId: number
+        date: string
+        checkIn?: string | null
+        checkOut?: string | null
+        status?: AttendanceRecord['status']
+        notes?: string | null
+      }): Promise<AttendanceRecord> {
+        return {
+          id: String(Date.now()),
+          employee: '',
+          checkIn: input.checkIn ?? null,
+          checkOut: input.checkOut ?? null,
+          status: input.status ?? 'present',
+          hoursWorked: null,
+          validated: false,
+          validatedBy: null,
+          notes: input.notes ?? '',
+          source: 'record',
+          leaveRequestId: null,
+          employeeId: input.employeeId,
+          date: input.date,
+        }
+      },
+      async update(id: string, _input: unknown): Promise<AttendanceRecord> {
+        throw new Error(`No attendance record ${id} in mock mode.`)
+      },
+      async validate(id: string): Promise<AttendanceRecord> {
+        throw new Error(`No attendance record ${id} in mock mode.`)
+      },
+      async remove(): Promise<void> {},
+    }
 
 export const documentRepository = isApiDataMode
   ? apiDocumentRepository

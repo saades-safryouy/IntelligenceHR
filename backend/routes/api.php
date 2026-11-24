@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\AuthController;
@@ -118,6 +119,12 @@ Route::prefix('v1')->group(function () {
 
         // Audit log
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+        // Attendance
+        Route::get('attendance-records', [AttendanceController::class, 'index']);
+        Route::post('attendance-records', [AttendanceController::class, 'store']);
+        Route::patch('attendance-records/{attendanceRecord}', [AttendanceController::class, 'update']);
+        Route::delete('attendance-records/{attendanceRecord}', [AttendanceController::class, 'destroy']);
 
         // Training
         Route::get('training-courses', [TrainingController::class, 'indexCourses']);

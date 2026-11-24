@@ -1,0 +1,208 @@
+/* Attendance page — my attendance, team view, manual entries. Uses the app's shared tokens. */
+
+.att-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+
+.att-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.att-tab-active {
+  border-color: var(--blue, #2563eb);
+  background-color: color-mix(in srgb, var(--blue, #2563eb) 10%, transparent);
+  color: var(--blue, #2563eb);
+}
+
+.att-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--red, #dc2626);
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--red, #dc2626) 8%, transparent);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.att-form {
+  margin-block-end: 16px;
+  padding: 20px;
+}
+
+.att-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 8px;
+}
+
+.att-form-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.att-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.att-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.att-form-grid label input,
+.att-form-grid label select {
+  font-weight: 400;
+}
+
+.att-span {
+  grid-column: 1 / -1;
+}
+
+.att-hint {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.att-form-error {
+  margin: 12px 0 0;
+  color: var(--red, #dc2626);
+  font-size: 13px;
+}
+
+.att-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.att-panel {
+  padding: 8px 20px 20px;
+  overflow-x: auto;
+}
+
+.att-empty {
+  padding: 32px 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.att-today {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-block-end: 1px solid var(--line);
+  margin-block-end: 8px;
+}
+
+.att-today > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.att-today > div:first-child span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.att-today-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.att-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.att-filters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.att-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.att-table th,
+.att-table td {
+  padding: 12px 8px;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.att-table th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.att-table td strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.att-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.att-validated {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint, #16a34a);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.att-confirm {
+  margin-block-start: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--surface);
+  font-size: 14px;
+}

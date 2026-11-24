@@ -1,4 +1,4 @@
-import type { Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { AttendanceRecord, Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
 import type { MockRepository, RepositoryPage } from './mockRepository'
 import { apiData, apiFile, apiRequest, apiUpload } from '../lib/apiClient'
 
@@ -701,5 +701,105 @@ export const apiTrainingEnrollmentRepository: MockRepository<TrainingEnrollment>
   async delete(id) {
     await apiData(`/api/v1/training-enrollments/${id}`, { method: 'DELETE' })
     return true
+  },
+}
+
+interface ApiAttendanceRecord {
+  id: number | string
+  employee_id: number
+  employee: string | null
+  date: string
+  check_in: string | null
+  check_out: string | null
+  status: AttendanceRecord['status']
+  hours_worked: number | null
+  validated: boolean
+  validated_by: string | null
+  notes: string | null
+  source: AttendanceRecord['source']
+  leave_request_id: string | null
+}
+
+function toAttendanceRecord(item: ApiAttendanceRecord): AttendanceRecord {
+  return {
+    id: String(item.id),
+    employeeId: Number(item.employee_id),
+    employee: item.employee ?? '',
+    date: item.date ?? '',
+    checkIn: item.check_in ?? null,
+    checkOut: item.check_out ?? null,
+    status: item.status ?? 'present',
+    hoursWorked: item.hours_worked !== null && item.hours_worked !== undefined ? Number(item.hours_worked) : null,
+    validated: Boolean(item.validated),
+    validatedBy: item.validated_by ?? null,
+    notes: item.notes ?? '',
+    source: item.source ?? 'record',
+    leaveRequestId: item.leave_request_id ?? null,
+  }
+}
+
+export interface AttendanceFilters {
+  from?: string
+  to?: string
+  employeeId?: number
+}
+
+/** Attendance — server-backed (see /api/v1/attendance-records). Manual check-in/out, no biometric, no import. */
+export const apiAttendanceActions = {
+  async list(filters: AttendanceFilters = {}): Promise<AttendanceRecord[]> {
+    const params = new URLSearchParams()
+    if (filters.from) params.set('from', filters.from)
+    if (filters.to) params.set('to', filters.to)
+    if (filters.employeeId !== undefined) params.set('employee_id', String(filters.employeeId))
+    const response = await apiData<ApiAttendanceRecord[]>(`/api/v1/attendance-records?${params}`)
+    return response.map(toAttendanceRecord)
+  },
+  async save(input: {
+    employeeId: number
+    date: string
+    checkIn?: string | null
+    checkOut?: string | null
+    status?: AttendanceRecord['status']
+    notes?: string | null
+  }): Promise<AttendanceRecord> {
+    const res = await apiData<ApiAttendanceRecord>('/api/v1/attendance-records', {
+      method: 'POST',
+      body: JSON.stringify({
+        employee_id: input.employeeId,
+        date: input.date,
+        check_in: input.checkIn ?? null,
+        check_out: input.checkOut ?? null,
+        status: input.status ?? undefined,
+        notes: input.notes ?? null,
+      }),
+    })
+    return toAttendanceRecord(res)
+  },
+  async update(id: string, input: {
+    checkIn?: string | null
+    checkOut?: string | null
+    status?: AttendanceRecord['status']
+    notes?: string | null
+  }): Promise<AttendanceRecord> {
+    const res = await apiData<ApiAttendanceRecord>(`/api/v1/attendance-records/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        check_in: input.checkIn ?? undefined,
+        check_out: input.checkOut ?? undefined,
+        status: input.status ?? undefined,
+        notes: input.notes ?? undefined,
+      }),
+    })
+    return toAttendanceRecord(res)
+  },
+  async validate(id: string): Promise<AttendanceRecord> {
+    const res = await apiData<ApiAttendanceRecord>(`/api/v1/attendance-records/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ validated: true }),
+    })
+    return toAttendanceRecord(res)
+  },
+  async remove(id: string): Promise<void> {
+    await apiData(`/api/v1/attendance-records/${id}`, { method: 'DELETE' })
   },
 }

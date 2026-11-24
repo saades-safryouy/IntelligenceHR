@@ -88,6 +88,11 @@ export const navItems: NavItem[] = [
     label: 'training',
     icon: GraduationCap,
   },
+  {
+    to: '/app/attendance',
+    label: 'attendance',
+    icon: Clock3,
+  },
    {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
@@ -118,12 +123,6 @@ export const futureModules = [
     title: 'Recruitment',
     detail: 'Connect future hiring workflows directly to onboarding.',
     icon: BriefcaseBusiness,
-  },
-  {
-    path: '/app/attendance',
-    title: 'Attendance',
-    detail: 'Time and attendance insights are being prepared for the next release.',
-    icon: Clock3,
   },
   {
     path: '/app/performance',

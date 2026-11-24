@@ -11,6 +11,7 @@ use App\Models\LeaveType;
 use App\Models\Notification;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
+use App\Models\AttendanceRecord;
 use App\Models\TrainingCourse;
 use App\Models\TrainingEnrollment;
 use App\Models\User;
@@ -126,6 +127,47 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Throne Day', 'name_key' => 'holiday.throneDay', 'date' => '2026-07-30', 'days' => 1, 'recurring' => true, 'type' => 'Public', 'country' => 'MA', 'site' => null],
         ] as $h) {
             Holiday::updateOrCreate(['name' => $h['name'], 'date' => $h['date']], $h);
+        }
+
+        // --- Attendance (past 5 working days before the 2026-11-24 seed date) ---
+        // Times are fixed per employee so the seed is deterministic.
+        $attendanceSeed = [
+            1043 => ['in' => '08:50', 'out' => '17:45'],
+            1044 => ['in' => '08:55', 'out' => '18:00'],
+            1045 => ['in' => '09:05', 'out' => '17:30'],
+            1046 => ['in' => '08:40', 'out' => '17:35'],
+            1047 => ['in' => '09:00', 'out' => '17:50'],
+            1048 => ['in' => '08:45', 'out' => '17:40'],
+        ];
+        foreach (['2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-23'] as $day) {
+            foreach ($attendanceSeed as $empId => $times) {
+                $in = $times['in'];
+                $out = $times['out'];
+                $status = 'present';
+                $notes = null;
+                if ($empId === 1044 && $day === '2026-11-20') {
+                    $in = '09:45';
+                    $status = 'late';
+                    $notes = 'Late arrival.';
+                }
+                if ($empId === 1045 && $day === '2026-11-19') {
+                    $in = null;
+                    $out = null;
+                    $status = 'absent';
+                    $notes = 'Absent, no notice.';
+                }
+                $hours = ($in && $out)
+                    ? round((strtotime($out) - strtotime($in)) / 3600, 2)
+                    : null;
+                AttendanceRecord::updateOrCreate(
+                    ['employee_id' => $empId, 'date' => $day],
+                    [
+                        'check_in' => $in, 'check_out' => $out, 'status' => $status,
+                        'hours_worked' => $hours, 'validated' => ! ($empId === 1047 && $day === '2026-11-23'),
+                        'notes' => $notes,
+                    ]
+                );
+            }
         }
 
         // --- Training ---
