@@ -115,7 +115,8 @@
 }
 
 .wa-line-hires {
-  stroke: var(--wa-success);
+  /* Orange second series, like the reference dashboard's forecast line. */
+  stroke: var(--wa-warning);
 }
 
 .wa-guide {
@@ -135,7 +136,7 @@
 }
 
 .wa-point-hires {
-  stroke: var(--wa-success);
+  stroke: var(--wa-warning);
 }
 
 .wa-chart rect:focus-visible {
