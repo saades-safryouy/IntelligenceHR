@@ -71,7 +71,7 @@ export function AppLayout({
         }`}
       >
         <div className="brand-wrap">
-          <Brand compact={collapsed} theme={'dark'} />
+          <Brand compact={collapsed} theme={theme} />
           <button
             className="icon-button sidebar-close"
             onClick={() => setMobileOpen(false)}
@@ -143,7 +143,7 @@ export function AppLayout({
           </button>
 
           <div className="ecosystem">
-            Intillegence AGENCY
+            Intelligence AGENCY
             <span>•</span>
             PLATFORM
           </div>
