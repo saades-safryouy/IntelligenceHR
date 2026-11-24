@@ -35,11 +35,10 @@ export function KpiStrip({ metrics }: { metrics: Metrics }) {
     {
       label: t.kpiLeavePending,
       value: String(metrics.leavePending),
-      delta: {
-        tone: metrics.leavePending > 0 ? 'bad' : 'good',
-        icon: 'down',
-        text: `${metrics.onLeaveCount} ${t.kpiOnLeaveNow}`,
-      },
+      delta:
+        metrics.leavePending > 0
+          ? { tone: 'bad', icon: 'down', text: `${metrics.leavePending} ${t.kpiAwaitingApproval}` }
+          : { tone: 'good', icon: 'check', text: t.kpiOnTrack },
       desc: t.kpiLeavePendingNote,
     },
     {
