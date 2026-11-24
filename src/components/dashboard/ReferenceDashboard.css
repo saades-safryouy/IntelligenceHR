@@ -1,0 +1,332 @@
+/*
+ * Reference dashboard theme — matches the "Intelligence Logistique" reference
+ * screenshots: flat white cards, 1px light borders, ~10px radius, almost no
+ * shadow, generous whitespace. Colours come from the app tokens
+ * (--surface, --line, --text, --muted, --blue, --orange, --red, --mint) so
+ * the layout follows the app's light/dark theme automatically.
+ *
+ * All rules are scoped under .page.dashboard-page.ref-dashboard with high
+ * specificity so they win over the layered App.css dashboard overrides.
+ */
+
+/* ---------- greeting + insight ---------- */
+.page.dashboard-page.ref-dashboard .ref-greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.page.dashboard-page.ref-dashboard .ref-greeting h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(26px, 2.6vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.9px;
+  line-height: 1.15;
+}
+
+.page.dashboard-page.ref-dashboard .ref-insight {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.page.dashboard-page.ref-dashboard .ref-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+/* ---------- KPI strip: one bordered row, 4 cells, vertical dividers ---------- */
+.page.dashboard-page.ref-dashboard .ref-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi {
+  min-width: 0;
+  padding: 20px 22px 18px;
+  border-inline-start: 1px solid var(--line);
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi:first-child {
+  border-inline-start: 0;
+  box-shadow: inset 0 2px 0 var(--orange);
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-value {
+  display: block;
+  margin: 8px 0 6px;
+  color: var(--text);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-delta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-delta.good {
+  color: var(--mint);
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-delta.bad {
+  color: var(--red);
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-delta.neutral {
+  color: var(--muted);
+}
+
+.page.dashboard-page.ref-dashboard .ref-kpi-desc {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ---------- full-width overview card ---------- */
+.page.dashboard-page.ref-dashboard .ref-wide-card {
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-value {
+  color: var(--text);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-delta.neutral {
+  color: var(--muted);
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-note {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-segmented-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-raised);
+}
+
+.page.dashboard-page.ref-dashboard .ref-segmented-bar span {
+  display: block;
+  height: 100%;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.page.dashboard-page.ref-dashboard .ref-wide-legend strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- charts row: line chart + donut ---------- */
+.page.dashboard-page.ref-dashboard .ref-charts-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-chart-card {
+  min-width: 0;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-chart-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-chart-head h2 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-chart-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-legend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.page.dashboard-page.ref-dashboard .ref-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.page.dashboard-page.ref-dashboard .ref-legend-chip i {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* ---------- flatten the remaining dashboard panels to the reference look ---------- */
+.page.dashboard-page.ref-dashboard .panel {
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.page.dashboard-page.ref-dashboard .panel:hover {
+  border-color: var(--line);
+  box-shadow: none;
+  transform: none;
+}
+
+.page.dashboard-page.ref-dashboard .panel-title {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .page.dashboard-page.ref-dashboard .ref-charts-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-kpi:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-kpi:nth-child(even) {
+    border-inline-start: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 560px) {
+  .page.dashboard-page.ref-dashboard .ref-kpi-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-kpi {
+    border-inline-start: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-kpi:first-child {
+    border-top: 0;
+  }
+
+  .page.dashboard-page.ref-dashboard .ref-greeting h1 {
+    font-size: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page.dashboard-page.ref-dashboard .panel,
+  .page.dashboard-page.ref-dashboard .ref-kpi-strip {
+    transition: none;
+  }
+}
