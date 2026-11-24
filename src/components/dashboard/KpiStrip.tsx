@@ -8,12 +8,12 @@ type DeltaTone = 'good' | 'bad' | 'neutral'
 type Kpi = {
   label: string
   value: string
-  delta: { tone: DeltaTone; icon: 'up' | 'down' | 'check'; text: string }
+  delta: { tone: DeltaTone; icon: 'up' | 'down' | 'check' | 'none'; text: string }
   desc: string
 }
 
 const deltaIcon = (icon: Kpi['delta']['icon']) =>
-  icon === 'up' ? <ArrowUp size={13} /> : icon === 'down' ? <ArrowDown size={13} /> : <Check size={13} />
+  icon === 'up' ? <ArrowUp size={13} /> : icon === 'down' ? <ArrowDown size={13} /> : icon === 'check' ? <Check size={13} /> : null
 
 /**
  * The reference KPI strip: one bordered row of exactly four cells with
@@ -37,7 +37,7 @@ export function KpiStrip({ metrics }: { metrics: Metrics }) {
       value: String(metrics.leavePending),
       delta:
         metrics.leavePending > 0
-          ? { tone: 'bad', icon: 'down', text: `${metrics.leavePending} ${t.kpiAwaitingApproval}` }
+          ? { tone: 'neutral', icon: 'none', text: `${metrics.leavePending} ${t.kpiAwaitingApproval}` }
           : { tone: 'good', icon: 'check', text: t.kpiOnTrack },
       desc: t.kpiLeavePendingNote,
     },
