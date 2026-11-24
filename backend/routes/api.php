@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
@@ -97,6 +98,9 @@ Route::prefix('v1')->group(function () {
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::patch('notifications/{notification}/read', [NotificationController::class, 'read']);
         Route::post('notifications/read', [NotificationController::class, 'readMany']);
+
+        // Audit log
+        Route::get('audit-logs', [AuditLogController::class, 'index']);
 
         // Org chart, dashboards, analytics
         Route::get('org-chart', [DashboardController::class, 'orgChart']);
