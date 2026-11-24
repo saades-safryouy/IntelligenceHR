@@ -19,7 +19,7 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Candidate, Department, Employee, EmployeeDocumentRecord, Goal, Holiday, Interview, Job, JobApplication, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
 import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
 import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions, apiPerformanceActions, apiRecruitmentActions } from './apiDomainRepositories'
@@ -239,7 +239,7 @@ export const trainingCourseRepository = isApiDataMode
   : createMockRepository<TrainingCourse>({
       read: () => [],
       get: () => null,
-      create: (input) => ({ id: String(Date.now()), enrollmentsCount: 0, ...input }),
+      create: (input) => ({ id: String(Date.now()), ...input }),
       update: (_id, _updates) => null,
       delete: () => true,
     })
