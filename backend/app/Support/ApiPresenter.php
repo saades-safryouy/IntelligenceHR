@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
@@ -154,6 +155,20 @@ class ApiPresenter
             'budget' => $d->budget !== null ? (string) $d->budget : '$0',
             'parent_id' => $d->parent_id,
             'is_active' => (bool) $d->is_active,
+        ];
+    }
+
+    public static function auditLog(AuditLog $l): array
+    {
+        return [
+            'id' => (string) $l->id,
+            'user_id' => $l->user_id ? (string) $l->user_id : null,
+            'user_name' => $l->user_name,
+            'action' => $l->action,
+            'resource_type' => $l->resource_type,
+            'resource_id' => $l->resource_id,
+            'details' => $l->details,
+            'created_at' => $l->created_at?->toISOString(),
         ];
     }
 
