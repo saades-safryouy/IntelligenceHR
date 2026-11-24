@@ -96,7 +96,7 @@ export function ManagerLayout({
     <div className="app-frame">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="brand-wrap">
-          <Brand compact={collapsed} theme={theme} darkSurface />
+          <Brand compact={collapsed} theme={theme} />
           <button className="icon-button sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
             <X size={18} />
           </button>
