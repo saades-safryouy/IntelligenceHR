@@ -1,4 +1,4 @@
-import type { AttendanceRecord, Department, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { AttendanceRecord, Department, EmployeeDocumentRecord, Goal, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
 import type { MockRepository, RepositoryPage } from './mockRepository'
 import { apiData, apiFile, apiRequest, apiUpload } from '../lib/apiClient'
 
@@ -801,5 +801,214 @@ export const apiAttendanceActions = {
   },
   async remove(id: string): Promise<void> {
     await apiData(`/api/v1/attendance-records/${id}`, { method: 'DELETE' })
+  },
+}
+
+export interface PerformanceActions {
+  listCycles: () => Promise<ReviewCycle[]>
+  createCycle: (input: {
+    title: string
+    periodStart: string
+    periodEnd: string
+    status: string
+  }) => Promise<ReviewCycle>
+  updateCycle: (
+    id: string,
+    input: Partial<{ title: string; periodStart: string; periodEnd: string; status: string }>,
+  ) => Promise<ReviewCycle>
+  deleteCycle: (id: string) => Promise<void>
+  listReviews: (filters?: { cycleId?: string; employeeId?: number }) => Promise<PerformanceReview[]>
+  createReview: (input: {
+    employeeId: number
+    cycleId: number
+    rating: number | null
+    strengths: string | null
+    improvements: string | null
+    feedback: string | null
+    status: string
+  }) => Promise<PerformanceReview>
+  updateReview: (
+    id: string,
+    input: Partial<{
+      rating: number | null
+      strengths: string | null
+      improvements: string | null
+      feedback: string | null
+      status: string
+    }>,
+  ) => Promise<PerformanceReview>
+  deleteReview: (id: string) => Promise<void>
+  listGoals: (filters?: { employeeId?: number; status?: string }) => Promise<Goal[]>
+  createGoal: (input: {
+    employeeId: number
+    title: string
+    description: string | null
+    targetDate: string | null
+    status: string
+    progress: number
+  }) => Promise<Goal>
+  updateGoal: (
+    id: string,
+    input: Partial<{
+      title: string
+      description: string | null
+      targetDate: string | null
+      status: string
+      progress: number
+    }>,
+  ) => Promise<Goal>
+  deleteGoal: (id: string) => Promise<void>
+}
+
+function cycleFromApi(row: Record<string, unknown>): ReviewCycle {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    periodStart: (row.period_start as string | null) ?? null,
+    periodEnd: (row.period_end as string | null) ?? null,
+    status: (row.status as ReviewCycle['status']) ?? 'draft',
+    reviewsCount: (row.reviews_count as number | null) ?? null,
+  }
+}
+
+function cycleToApi(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  if (input.title !== undefined) out.title = input.title
+  if (input.periodStart !== undefined) out.period_start = input.periodStart
+  if (input.periodEnd !== undefined) out.period_end = input.periodEnd
+  if (input.status !== undefined) out.status = input.status
+  return out
+}
+
+function reviewFromApi(row: Record<string, unknown>): PerformanceReview {
+  return {
+    id: String(row.id),
+    employeeId: Number(row.employee_id),
+    employee: (row.employee as string | null) ?? null,
+    reviewerId: row.reviewer_id === null ? null : Number(row.reviewer_id),
+    reviewer: (row.reviewer as string | null) ?? null,
+    cycleId: String(row.cycle_id),
+    cycle: (row.cycle as string | null) ?? null,
+    rating: row.rating === null ? null : Number(row.rating),
+    strengths: (row.strengths as string | null) ?? null,
+    improvements: (row.improvements as string | null) ?? null,
+    feedback: (row.feedback as string | null) ?? null,
+    status: (row.status as PerformanceReview['status']) ?? 'draft',
+  }
+}
+
+function reviewToApi(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  if (input.employeeId !== undefined) out.employee_id = input.employeeId
+  if (input.cycleId !== undefined) out.cycle_id = input.cycleId
+  if (input.reviewerId !== undefined) out.reviewer_id = input.reviewerId
+  if (input.rating !== undefined) out.rating = input.rating
+  if (input.strengths !== undefined) out.strengths = input.strengths
+  if (input.improvements !== undefined) out.improvements = input.improvements
+  if (input.feedback !== undefined) out.feedback = input.feedback
+  if (input.status !== undefined) out.status = input.status
+  return out
+}
+
+function goalFromApi(row: Record<string, unknown>): Goal {
+  return {
+    id: String(row.id),
+    employeeId: Number(row.employee_id),
+    employee: (row.employee as string | null) ?? null,
+    title: String(row.title ?? ''),
+    description: (row.description as string | null) ?? null,
+    targetDate: (row.target_date as string | null) ?? null,
+    status: (row.status as Goal['status']) ?? 'not_started',
+    progress: Number(row.progress ?? 0),
+  }
+}
+
+function goalToApi(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  if (input.employeeId !== undefined) out.employee_id = input.employeeId
+  if (input.title !== undefined) out.title = input.title
+  if (input.description !== undefined) out.description = input.description
+  if (input.targetDate !== undefined) out.target_date = input.targetDate
+  if (input.status !== undefined) out.status = input.status
+  if (input.progress !== undefined) out.progress = input.progress
+  return out
+}
+
+/** Performance — server-backed (see /api/v1/review-cycles, /performance-reviews, /goals). Rating scale 1-5. */
+export const apiPerformanceActions: PerformanceActions = {
+  async listCycles() {
+    const rows = await apiData<Record<string, unknown>[]>('/api/v1/review-cycles')
+    return rows.map(cycleFromApi)
+  },
+  async createCycle(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/review-cycles', {
+      method: 'POST',
+      body: JSON.stringify(cycleToApi(input as unknown as Record<string, unknown>)),
+    })
+    return cycleFromApi(row)
+  },
+  async updateCycle(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/review-cycles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(cycleToApi(input as unknown as Record<string, unknown>)),
+    })
+    return cycleFromApi(row)
+  },
+  async deleteCycle(id) {
+    await apiData(`/api/v1/review-cycles/${id}`, { method: 'DELETE' })
+  },
+  async listReviews(filters) {
+    const params = new URLSearchParams()
+    if (filters?.cycleId) params.set('cycle_id', filters.cycleId)
+    if (filters?.employeeId !== undefined) params.set('employee_id', String(filters.employeeId))
+    const query = params.toString()
+    const rows = await apiData<Record<string, unknown>[]>(
+      `/api/v1/performance-reviews${query ? `?${query}` : ''}`,
+    )
+    return rows.map(reviewFromApi)
+  },
+  async createReview(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/performance-reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewToApi(input as unknown as Record<string, unknown>)),
+    })
+    return reviewFromApi(row)
+  },
+  async updateReview(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/performance-reviews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(reviewToApi(input as unknown as Record<string, unknown>)),
+    })
+    return reviewFromApi(row)
+  },
+  async deleteReview(id) {
+    await apiData(`/api/v1/performance-reviews/${id}`, { method: 'DELETE' })
+  },
+  async listGoals(filters) {
+    const params = new URLSearchParams()
+    if (filters?.employeeId !== undefined) params.set('employee_id', String(filters.employeeId))
+    if (filters?.status) params.set('status', filters.status)
+    const query = params.toString()
+    const rows = await apiData<Record<string, unknown>[]>(
+      `/api/v1/goals${query ? `?${query}` : ''}`,
+    )
+    return rows.map(goalFromApi)
+  },
+  async createGoal(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/goals', {
+      method: 'POST',
+      body: JSON.stringify(goalToApi(input as unknown as Record<string, unknown>)),
+    })
+    return goalFromApi(row)
+  },
+  async updateGoal(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/goals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(goalToApi(input as unknown as Record<string, unknown>)),
+    })
+    return goalFromApi(row)
+  },
+  async deleteGoal(id) {
+    await apiData(`/api/v1/goals/${id}`, { method: 'DELETE' })
   },
 }

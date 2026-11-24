@@ -1,0 +1,231 @@
+/* Performance page — reviews, goals and review cycles. Uses the app's shared tokens. */
+
+.perf-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.perf-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.perf-btn-primary {
+  border-color: var(--blue, #2563eb);
+  background-color: var(--blue, #2563eb);
+  color: #fff;
+}
+
+.perf-btn-outline {
+  background: transparent;
+  color: var(--text);
+}
+
+.perf-btn-danger {
+  border-color: var(--red, #dc2626);
+  background: transparent;
+  color: var(--red, #dc2626);
+}
+
+.perf-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+
+.perf-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.perf-tab-active {
+  border-color: var(--blue, #2563eb);
+  background-color: color-mix(in srgb, var(--blue, #2563eb) 10%, transparent);
+  color: var(--blue, #2563eb);
+}
+
+.perf-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--red, #dc2626);
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--red, #dc2626) 8%, transparent);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.perf-form {
+  margin-block-end: 16px;
+  padding: 20px;
+}
+
+.perf-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 8px;
+}
+
+.perf-form-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.perf-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.perf-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perf-form-grid label input,
+.perf-form-grid label select,
+.perf-form-grid label textarea {
+  font-weight: 400;
+}
+
+.perf-span {
+  grid-column: 1 / -1;
+}
+
+.perf-form-error {
+  margin: 12px 0 0;
+  color: var(--red, #dc2626);
+  font-size: 13px;
+}
+
+.perf-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.perf-panel {
+  padding: 8px 20px 20px;
+  overflow-x: auto;
+}
+
+.perf-empty {
+  padding: 32px 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.perf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.perf-filters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perf-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.perf-table th,
+.perf-table td {
+  padding: 12px 8px;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.perf-table th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.perf-table td strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.perf-sub {
+  display: block;
+  margin-block-start: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.perf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.perf-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.perf-progress-bar {
+  inline-size: 96px;
+  block-size: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--line);
+}
+
+.perf-progress-fill {
+  block-size: 100%;
+  border-radius: 999px;
+  background-color: var(--blue, #2563eb);
+}
+
+.perf-progress-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 8px;
+}
+
+.perf-progress-edit input {
+  inline-size: 72px;
+}

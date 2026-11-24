@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Goal;
 use App\Models\Holiday;
 use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
@@ -12,6 +13,8 @@ use App\Models\Notification;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
 use App\Models\AttendanceRecord;
+use App\Models\PerformanceReview;
+use App\Models\ReviewCycle;
 use App\Models\TrainingCourse;
 use App\Models\TrainingEnrollment;
 use App\Models\User;
@@ -127,6 +130,33 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Throne Day', 'name_key' => 'holiday.throneDay', 'date' => '2026-07-30', 'days' => 1, 'recurring' => true, 'type' => 'Public', 'country' => 'MA', 'site' => null],
         ] as $h) {
             Holiday::updateOrCreate(['name' => $h['name'], 'date' => $h['date']], $h);
+        }
+
+        // --- Performance ---
+        $annual = ReviewCycle::updateOrCreate(
+            ['title' => '2026 Annual Review'],
+            ['period_start' => '2026-01-01', 'period_end' => '2026-12-31', 'status' => 'active']
+        );
+        ReviewCycle::updateOrCreate(
+            ['title' => 'H2 2026 Mid-Year Review'],
+            ['period_start' => '2026-07-01', 'period_end' => '2026-12-31', 'status' => 'draft']
+        );
+        PerformanceReview::updateOrCreate(
+            ['employee_id' => 1047, 'cycle_id' => $annual->id],
+            ['reviewer_id' => 1043, 'rating' => 4, 'strengths' => 'Strong technical delivery and reliability.',
+             'improvements' => 'Take more ownership of code reviews.', 'feedback' => 'Solid year, keep growing into senior scope.', 'status' => 'submitted']
+        );
+        PerformanceReview::updateOrCreate(
+            ['employee_id' => 1043, 'cycle_id' => $annual->id],
+            ['reviewer_id' => 1048, 'rating' => 5, 'strengths' => 'Excellent team leadership.',
+             'improvements' => 'Delegate more.', 'feedback' => 'Outstanding.', 'status' => 'draft']
+        );
+        foreach ([
+            ['employee_id' => 1047, 'title' => 'Complete Spring Boot certification', 'description' => 'Pass the Spring Professional certification.', 'target_date' => '2026-12-31', 'status' => 'in_progress', 'progress' => 60],
+            ['employee_id' => 1043, 'title' => 'Reduce onboarding time by 20%', 'description' => 'Streamline the onboarding checklist and handover.', 'target_date' => '2026-12-31', 'status' => 'in_progress', 'progress' => 40],
+            ['employee_id' => 1044, 'title' => 'Implement new WMS process', 'description' => 'Roll out the new warehouse management process.', 'target_date' => '2027-03-31', 'status' => 'not_started', 'progress' => 0],
+        ] as $goal) {
+            Goal::updateOrCreate(['employee_id' => $goal['employee_id'], 'title' => $goal['title']], $goal);
         }
 
         // --- Attendance (past 5 working days before the 2026-11-24 seed date) ---

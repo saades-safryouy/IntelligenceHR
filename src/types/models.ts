@@ -272,6 +272,41 @@ export const ONBOARDING_STAGE_ORDER: OnboardingStage[] = [
 export type TrainingCourseStatus = 'active' | 'archived'
 export type TrainingEnrollmentStatus = 'enrolled' | 'in_progress' | 'completed'
 
+export interface ReviewCycle {
+  id: string
+  title: string
+  periodStart?: string | null
+  periodEnd?: string | null
+  status: 'draft' | 'active' | 'closed'
+  reviewsCount?: number | null
+}
+
+export interface PerformanceReview {
+  id: string
+  employeeId: number
+  employee?: string | null
+  reviewerId?: number | null
+  reviewer?: string | null
+  cycleId: string
+  cycle?: string | null
+  rating: number | null
+  strengths?: string | null
+  improvements?: string | null
+  feedback?: string | null
+  status: 'draft' | 'submitted'
+}
+
+export interface Goal {
+  id: string
+  employeeId: number
+  employee?: string | null
+  title: string
+  description?: string | null
+  targetDate?: string | null
+  status: 'not_started' | 'in_progress' | 'completed'
+  progress: number
+}
+
 export interface TrainingCourse {
   id: string
   title: string

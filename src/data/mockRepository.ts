@@ -19,11 +19,11 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Department, Employee, EmployeeDocumentRecord, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { Department, Employee, EmployeeDocumentRecord, Goal, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
 import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions } from './apiDomainRepositories'
-import type { AttendanceFilters } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions, apiPerformanceActions } from './apiDomainRepositories'
+import type { AttendanceFilters, PerformanceActions } from './apiDomainRepositories'
 import type { AttendanceRecord } from '../types/models'
 import { departments } from './mock'
 
@@ -243,6 +243,23 @@ export const trainingCourseRepository = isApiDataMode
       update: (_id, _updates) => null,
       delete: () => true,
     })
+
+export const performanceActions: PerformanceActions = isApiDataMode
+  ? apiPerformanceActions
+  : {
+      listCycles: () => Promise.resolve([]),
+      createCycle: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      updateCycle: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      deleteCycle: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      listReviews: () => Promise.resolve([]),
+      createReview: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      updateReview: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      deleteReview: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      listGoals: () => Promise.resolve([]),
+      createGoal: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      updateGoal: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+      deleteGoal: () => Promise.reject(new Error('Performance is not available in demo mode.')),
+    }
 
 export const trainingEnrollmentRepository = isApiDataMode
   ? apiTrainingEnrollmentRepository

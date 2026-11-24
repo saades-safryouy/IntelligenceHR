@@ -8,6 +8,7 @@ use App\Models\CalendarEvent;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
+use App\Models\Goal;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
@@ -15,6 +16,8 @@ use App\Models\Notification;
 use App\Models\OffboardingCase;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
+use App\Models\PerformanceReview;
+use App\Models\ReviewCycle;
 use App\Models\TrainingCourse;
 use App\Models\TrainingEnrollment;
 use App\Models\User;
@@ -219,6 +222,56 @@ class ApiPresenter
             'leave_request_id' => (string) $leave->id,
             'created_at' => null,
             'updated_at' => null,
+        ];
+    }
+
+    public static function reviewCycle(ReviewCycle $c): array
+    {
+        return [
+            'id' => (string) $c->id,
+            'title' => $c->title,
+            'period_start' => $c->period_start?->toDateString(),
+            'period_end' => $c->period_end?->toDateString(),
+            'status' => $c->status,
+            'reviews_count' => $c->reviews_count ?? $c->reviews()->count(),
+            'created_at' => $c->created_at?->toISOString(),
+            'updated_at' => $c->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function performanceReview(PerformanceReview $r): array
+    {
+        return [
+            'id' => (string) $r->id,
+            'employee_id' => $r->employee_id,
+            'employee' => $r->employee ? $r->employee->first_name.' '.$r->employee->last_name : null,
+            'reviewer_id' => $r->reviewer_id,
+            'reviewer' => $r->reviewer ? $r->reviewer->first_name.' '.$r->reviewer->last_name : null,
+            'cycle_id' => (string) $r->cycle_id,
+            'cycle' => $r->cycle ? $r->cycle->title : null,
+            'rating' => $r->rating !== null ? (int) $r->rating : null,
+            'strengths' => $r->strengths,
+            'improvements' => $r->improvements,
+            'feedback' => $r->feedback,
+            'status' => $r->status,
+            'created_at' => $r->created_at?->toISOString(),
+            'updated_at' => $r->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function goal(Goal $g): array
+    {
+        return [
+            'id' => (string) $g->id,
+            'employee_id' => $g->employee_id,
+            'employee' => $g->employee ? $g->employee->first_name.' '.$g->employee->last_name : null,
+            'title' => $g->title,
+            'description' => $g->description,
+            'target_date' => $g->target_date?->toDateString(),
+            'status' => $g->status,
+            'progress' => (int) $g->progress,
+            'created_at' => $g->created_at?->toISOString(),
+            'updated_at' => $g->updated_at?->toISOString(),
         ];
     }
 

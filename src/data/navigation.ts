@@ -93,6 +93,11 @@ export const navItems: NavItem[] = [
     label: 'attendance',
     icon: Clock3,
   },
+  {
+    to: '/app/performance',
+    label: 'performance',
+    icon: BarChart3,
+  },
    {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
@@ -123,12 +128,6 @@ export const futureModules = [
     title: 'Recruitment',
     detail: 'Connect future hiring workflows directly to onboarding.',
     icon: BriefcaseBusiness,
-  },
-  {
-    path: '/app/performance',
-    title: 'Performance',
-    detail: 'Build a continuous performance culture with a connected people layer.',
-    icon: BarChart3,
   },
   {
     path: '/app/payroll',

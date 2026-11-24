@@ -13,6 +13,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -119,6 +120,20 @@ Route::prefix('v1')->group(function () {
 
         // Audit log
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+        // Performance
+        Route::get('review-cycles', [PerformanceController::class, 'indexCycles']);
+        Route::post('review-cycles', [PerformanceController::class, 'storeCycle']);
+        Route::put('review-cycles/{reviewCycle}', [PerformanceController::class, 'updateCycle']);
+        Route::delete('review-cycles/{reviewCycle}', [PerformanceController::class, 'destroyCycle']);
+        Route::get('performance-reviews', [PerformanceController::class, 'indexReviews']);
+        Route::post('performance-reviews', [PerformanceController::class, 'storeReview']);
+        Route::patch('performance-reviews/{performanceReview}', [PerformanceController::class, 'updateReview']);
+        Route::delete('performance-reviews/{performanceReview}', [PerformanceController::class, 'destroyReview']);
+        Route::get('goals', [PerformanceController::class, 'indexGoals']);
+        Route::post('goals', [PerformanceController::class, 'storeGoal']);
+        Route::patch('goals/{goal}', [PerformanceController::class, 'updateGoal']);
+        Route::delete('goals/{goal}', [PerformanceController::class, 'destroyGoal']);
 
         // Attendance
         Route::get('attendance-records', [AttendanceController::class, 'index']);
