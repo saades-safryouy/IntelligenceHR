@@ -20,7 +20,9 @@ class DashboardController extends Controller
     // --- Org chart ---
     public function orgChart()
     {
-        $employees = Employee::with('department')->orderBy('id')->get();
+        // Scoped like every other controller: HR sees all, managers see
+        // their department/subtree, others see only themselves.
+        $employees = $this->scopeEmployees(Employee::with('department')->orderBy('id'))->get();
         $byManager = [];
         foreach ($employees as $e) {
             $byManager[$e->manager_id ?? 0][] = $e;
@@ -80,10 +82,14 @@ class DashboardController extends Controller
     // --- HR dashboard statistics (mock-adapter shape, contract §3.10) ---
     public function statistics()
     {
-        $employees = Employee::with(['department', 'manager', 'documents'])->orderBy('id')->get();
-        $onboarding = OnboardingCase::with('tasks')->orderByDesc('created_at')->get();
-        $offboarding = OffboardingCase::orderByDesc('created_at')->get();
-        $leaves = LeaveRequest::with(['employee', 'leaveType', 'backupEmployee'])->orderByDesc('submitted_at')->get();
+        // Scoped like every other controller (was unscoped: any logged-in
+        // user could pull every employee, leave and case). Response shape
+        // is unchanged; HR still sees everything.
+        $employees = $this->scopeEmployees(Employee::with(['department', 'manager', 'documents'])->orderBy('id'))->get();
+        $employeeIds = $employees->pluck('id')->all();
+        $onboarding = OnboardingCase::with('tasks')->whereIn('employee_id', $employeeIds)->orderByDesc('created_at')->get();
+        $offboarding = OffboardingCase::whereIn('employee_id', $employeeIds)->orderByDesc('created_at')->get();
+        $leaves = LeaveRequest::with(['employee', 'leaveType', 'backupEmployee'])->whereIn('employee_id', $employeeIds)->orderByDesc('submitted_at')->get();
         $holidays = Holiday::orderBy('date')->get();
 
         $metrics = [
@@ -121,7 +127,7 @@ class DashboardController extends Controller
         $location = $request->query('location');
         $employmentStatus = $request->query('employmentStatus');
 
-        $empQuery = Employee::query();
+        $empQuery = $this->scopeEmployees(Employee::query());
         if ($departmentId) {
             $empQuery->where('department_id', $departmentId);
         }
@@ -145,13 +151,16 @@ class DashboardController extends Controller
         $statusDist = $employees->groupBy('status')
             ->map(fn ($g, $s) => ['status' => $s, 'total' => $g->count()])->values()->all();
 
+        // Headcount trend over the same scoped/filtered set as the rest
+        // of this response (previously counted every employee in the DB).
         $trend = [];
         $cursor = Carbon::parse($from)->startOfMonth();
         $end = Carbon::parse($to)->startOfMonth();
         while ($cursor->lte($end)) {
+            $monthEnd = $cursor->copy()->endOfMonth();
             $trend[] = [
                 'month' => $cursor->format('Y-m'),
-                'total' => Employee::where('joined_at', '<=', $cursor->copy()->endOfMonth()->toDateString())->count(),
+                'total' => $employees->filter(fn ($e) => $e->joined_at && Carbon::parse($e->joined_at)->lte($monthEnd))->count(),
             ];
             $cursor->addMonth();
         }
