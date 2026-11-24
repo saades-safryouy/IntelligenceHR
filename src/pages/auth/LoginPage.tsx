@@ -70,7 +70,7 @@ export function LoginPage({
         <div className="login-message">
           <span className="hero-kicker">
             <Sparkles size={14} />
-            Intillegence AGENCY
+            Intelligence AGENCY
           </span>
           <h1>
             People operations,
@@ -98,20 +98,20 @@ export function LoginPage({
           </div>
         </div>
 
-        <small className="login-footnote">IntillegenceHR · PEOPLE OPERATIONS PLATFORM</small>
+        <small className="login-footnote">IntelligenceHR · PEOPLE OPERATIONS PLATFORM</small>
       </div>
 
       {/* RIGHT FORM */}
       <div className="login-form-side">
         <button className="back-link" onClick={() => navigate('/')}>
           <ArrowRight size={16} className="back-arrow" />
-          Back to IntillegenceHR
+          Back to IntelligenceHR
         </button>
 
         <div className="login-form-wrap">
           <span className="eyebrow">WELCOME BACK</span>
           <h2>Sign in to your workspace.</h2>
-          <p>Use your IntillegenceHR account to continue.</p>
+          <p>Use your IntelligenceHR account to continue.</p>
 
           <form onSubmit={submit}>
             <label>
