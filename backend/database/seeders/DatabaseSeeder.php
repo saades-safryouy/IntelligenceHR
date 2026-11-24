@@ -78,16 +78,21 @@ class DatabaseSeeder extends Seeder
         Department::where('id', 'finance')->update(['manager_id' => 1046]);
         Department::where('id', 'people')->update(['manager_id' => 1048]);
 
-        // Demo API accounts from the contract (no linked employee record).
+        // Demo API accounts from the contract. The demo employee is linked to
+        // Ahmed Benali (1047) so the employee portal works for it: without a
+        // linked employee record, GET /employees/summary 404s on every
+        // employee-portal page load (the demo HR/manager accounts never call
+        // it — they are role-gated out of the employee portal).
         foreach ([
-            ['email' => 'demo.hr.admin@intelligence-rh.example.test', 'name' => 'Demo HR Admin', 'roles' => ['hr-admin']],
-            ['email' => 'demo.manager.01@intelligence-rh.example.test', 'name' => 'Demo Manager', 'roles' => ['manager']],
-            ['email' => 'demo.employee.01@intelligence-rh.example.test', 'name' => 'Demo Employee', 'roles' => ['employee']],
+            ['email' => 'demo.hr.admin@intelligence-rh.example.test', 'name' => 'Demo HR Admin', 'roles' => ['hr-admin'], 'employee_id' => null],
+            ['email' => 'demo.manager.01@intelligence-rh.example.test', 'name' => 'Demo Manager', 'roles' => ['manager'], 'employee_id' => null],
+            ['email' => 'demo.employee.01@intelligence-rh.example.test', 'name' => 'Demo Employee', 'roles' => ['employee'], 'employee_id' => 1047],
         ] as $demo) {
             User::updateOrCreate(['email' => $demo['email']], [
                 'name' => $demo['name'],
                 'password' => Hash::make($password),
                 'roles' => $demo['roles'],
+                'employee_id' => $demo['employee_id'],
             ]);
         }
 
