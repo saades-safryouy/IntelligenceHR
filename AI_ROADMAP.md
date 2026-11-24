@@ -1,4 +1,4 @@
-# AI_ROADMAP.md — IntillgenceHR
+# AI_ROADMAP.md — IntelligenceHR
 
 *Persistent roadmap and source of truth for AI coding agents. Updated after each meaningful change.*
 
