@@ -64,6 +64,60 @@ abstract class Controller extends BaseController
         return array_values(array_unique($perms));
     }
 
+    /**
+     * HR-title rule (Saad, 24 Nov 2026): any employee whose job title is an
+     * HR title gets FULL HR access. Titles are free text, so the match is an
+     * explicit list, checked against job_title OR position_title,
+     * case-insensitive. "HR" matches as a whole word only, so words like
+     * "through" never match.
+     */
+    private const HR_TITLE_PATTERNS = [
+        '/\bhr\b/i',
+        '/human resources/i',
+        '/talent acquisition/i',
+        '/recruit(er|ment)/i',
+        '/people operations/i',
+        '/people\s*(?:&|and)\s*culture/i',
+    ];
+
+    public static function hasHrTitle(?Employee $employee): bool
+    {
+        if (! $employee) {
+            return false;
+        }
+        foreach ([$employee->job_title, $employee->position_title] as $title) {
+            if (! is_string($title) || $title === '') {
+                continue;
+            }
+            foreach (self::HR_TITLE_PATTERNS as $pattern) {
+                if (preg_match($pattern, $title)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The user's roles plus 'hr-manager' when the linked employee holds an
+     * HR title. This is the single source of truth for HR-title access:
+     * can(), scopeEmployees() and AuthController::permissions() all read
+     * through it, so the frontend's permission-driven role upgrade picks
+     * the HR role up automatically. No frontend guard change is needed.
+     */
+    public static function effectiveRoles(User $user): array
+    {
+        $roles = $user->roles ?? [];
+        if (! in_array('hr-admin', $roles, true)
+            && ! in_array('hr-manager', $roles, true)
+            && self::hasHrTitle($user->employee)) {
+            $roles[] = 'hr-manager';
+        }
+
+        return array_values(array_unique($roles));
+    }
+
     protected function user(): User
     {
         return auth()->user();
@@ -71,9 +125,29 @@ abstract class Controller extends BaseController
 
     protected function can(string $permission): bool
     {
-        $perms = self::permissionsFor($this->user()->roles ?? []);
+        $perms = self::permissionsFor(self::effectiveRoles($this->user()));
 
         return in_array('*', $perms, true) || in_array($permission, $perms, true);
+    }
+
+    /**
+     * Best-effort audit entry for a key mutation. Logging must never break
+     * the request it records, so failures are swallowed silently.
+     */
+    protected function logAudit(string $action, ?string $resourceType, $resourceId, ?string $details = null): void
+    {
+        try {
+            \App\Models\AuditLog::create([
+                'user_id' => $this->user()->id ?? null,
+                'user_name' => $this->user()->name ?? null,
+                'action' => $action,
+                'resource_type' => $resourceType,
+                'resource_id' => $resourceId !== null ? (string) $resourceId : null,
+                'details' => $details,
+            ]);
+        } catch (\Throwable) {
+            // Audit logging is best-effort by design.
+        }
     }
 
     protected function forbidden()
