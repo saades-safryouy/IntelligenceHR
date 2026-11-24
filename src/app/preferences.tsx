@@ -20,7 +20,7 @@ const PreferencesContext = createContext<PreferencesContextValue | null>(null)
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem('Intillegence-theme') as Theme) || 'dark',
+    () => (localStorage.getItem('Intillegence-theme') as Theme) || 'light',
   )
   const [language, setLanguage] = useState<Language>(
     () => (localStorage.getItem('Intillegence-language') as Language) || 'en',
