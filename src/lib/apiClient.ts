@@ -78,8 +78,13 @@ export async function apiRequest<T>(
 }
 
 export async function apiData<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await apiRequest<ApiEnvelope<T>>(path, options)
-  return response.data
+  // apiRequest returns undefined for 204 No Content, which is what every
+  // backend destroy endpoint returns. Reading .data off undefined threw,
+  // so deletes succeeded on the server but callers never ran their
+  // post-delete state updates (e.g. a deleted calendar event stayed listed
+  // until reload). Tolerate the empty envelope here.
+  const response = await apiRequest<ApiEnvelope<T> | undefined>(path, options)
+  return (response?.data ?? undefined) as T
 }
 
 export async function apiUpload<T>(
