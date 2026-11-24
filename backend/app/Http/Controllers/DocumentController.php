@@ -78,6 +78,7 @@ class DocumentController extends Controller
         if ($request->hasFile('file')) {
             $this->attachFile($doc, $request->file('file'));
         }
+        $this->logAudit('document.created', 'employee_document', $doc->id, $doc->name);
         $doc->load('employee');
 
         return response()->json(['data' => ApiPresenter::document($doc)], 201);
@@ -95,6 +96,7 @@ class DocumentController extends Controller
             'expiry_date' => ['nullable', 'date'],
         ]);
         $employeeDocument->update($data);
+        $this->logAudit('document.updated', 'employee_document', $employeeDocument->id, $employeeDocument->name);
         $employeeDocument->load('employee');
 
         return response()->json(['data' => ApiPresenter::document($employeeDocument)]);
@@ -109,6 +111,7 @@ class DocumentController extends Controller
             Storage::disk('public')->delete($employeeDocument->file_path);
         }
         $employeeDocument->delete();
+        $this->logAudit('document.deleted', 'employee_document', $employeeDocument->id, $employeeDocument->name);
 
         return response()->noContent();
     }
@@ -164,6 +167,7 @@ class DocumentController extends Controller
             'review_comment' => $data['comment'] ?? null,
             'reviewed_at' => now(),
         ]);
+        $this->logAudit('document.reviewed', 'employee_document', $employeeDocument->id, $data['status']);
         $employeeDocument->load('employee');
 
         return response()->json(['data' => ApiPresenter::document($employeeDocument)]);
@@ -175,6 +179,7 @@ class DocumentController extends Controller
             return $this->forbidden();
         }
         $employeeDocument->update(['status' => 'archived']);
+        $this->logAudit('document.archived', 'employee_document', $employeeDocument->id, $employeeDocument->name);
         $employeeDocument->load('employee');
 
         return response()->json(['data' => ApiPresenter::document($employeeDocument)]);

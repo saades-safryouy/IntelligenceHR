@@ -110,6 +110,7 @@ class EmployeeController extends Controller
         }
         $data = $this->validateEmployee($request);
         $employee = Employee::create($data);
+        $this->logAudit('employee.created', 'employee', $employee->id, $employee->first_name.' '.$employee->last_name);
         $employee->load(['department', 'manager']);
 
         return response()->json(['data' => ApiPresenter::employee($employee)], 201);
@@ -123,6 +124,7 @@ class EmployeeController extends Controller
         }
         $data = $this->validateEmployee($request, partial: true);
         $employee->update($data);
+        $this->logAudit('employee.updated', 'employee', $employee->id, $employee->first_name.' '.$employee->last_name);
         $employee->load(['department', 'manager', 'documents']);
 
         return response()->json(['data' => ApiPresenter::employee($employee)]);
@@ -134,6 +136,7 @@ class EmployeeController extends Controller
             return $this->forbidden();
         }
         $employee->delete();
+        $this->logAudit('employee.deleted', 'employee', $employee->id, $employee->first_name.' '.$employee->last_name);
 
         return response()->noContent();
     }

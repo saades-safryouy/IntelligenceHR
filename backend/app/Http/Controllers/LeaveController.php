@@ -100,6 +100,7 @@ class LeaveController extends Controller
             }
         }
         $leaveRequest->delete();
+        $this->logAudit('leave.deleted', 'leave_request', $leaveRequest->id, (string) $leaveRequest->employee_id);
 
         return response()->noContent();
     }

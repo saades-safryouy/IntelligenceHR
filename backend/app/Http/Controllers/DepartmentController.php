@@ -33,6 +33,7 @@ class DepartmentController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
         $department = Department::create($data);
+        $this->logAudit('department.created', 'department', $department->id, $department->name);
         $department->load('manager');
 
         return response()->json(['data' => ApiPresenter::department($department)], 201);
@@ -54,6 +55,7 @@ class DepartmentController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
         $department->update($data);
+        $this->logAudit('department.updated', 'department', $department->id, $department->name);
         $department->load('manager');
 
         return response()->json(['data' => ApiPresenter::department($department)]);
@@ -65,6 +67,7 @@ class DepartmentController extends Controller
             return $this->forbidden();
         }
         $department->delete();
+        $this->logAudit('department.deleted', 'department', $department->id, $department->name);
 
         return response()->noContent();
     }

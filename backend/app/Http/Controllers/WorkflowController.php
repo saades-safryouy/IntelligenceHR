@@ -184,6 +184,7 @@ class WorkflowController extends Controller
         }
         $workflowInstance->steps = $steps;
         $workflowInstance->save();
+        $this->logAudit('workflow.'.$data['action'], $workflowInstance->resource_type, $workflowInstance->resource_id, $data['comment'] ?? null);
         $workflowInstance->load(['initiator', 'actions.actor']);
 
         return response()->json(['data' => ApiPresenter::workflowInstance($workflowInstance)]);

@@ -35,6 +35,7 @@ class HolidayController extends Controller
             'site' => ['nullable', 'string', 'max:255'],
         ]);
         $holiday = Holiday::create($data);
+        $this->logAudit('holiday.created', 'holiday', $holiday->id, $holiday->name);
 
         return response()->json(['data' => ApiPresenter::holiday($holiday)], 201);
     }
@@ -55,6 +56,7 @@ class HolidayController extends Controller
             'site' => ['nullable', 'string', 'max:255'],
         ]);
         $holiday->update($data);
+        $this->logAudit('holiday.updated', 'holiday', $holiday->id, $holiday->name);
 
         return response()->json(['data' => ApiPresenter::holiday($holiday)]);
     }
@@ -65,6 +67,7 @@ class HolidayController extends Controller
             return $this->forbidden();
         }
         $holiday->delete();
+        $this->logAudit('holiday.deleted', 'holiday', $holiday->id, $holiday->name);
 
         return response()->noContent();
     }
