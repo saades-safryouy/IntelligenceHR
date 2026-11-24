@@ -535,7 +535,7 @@ tbody tr:focus-within { outline:2px solid rgba(76,154,255,.4); outline-offset:-2
 @media (prefers-reduced-motion: reduce) { .page,.search-results,.notification-panel,.drawer-backdrop,.employee-drawer { animation:none; }.panel:hover,.kpi-card:hover,.directory-summary>div:hover,.document-summary>div:hover,.module-tile:hover { transform:none; } }
 @media (max-width:700px) { .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.details-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.request-header { gap:8px; padding-inline:11px; }.request-meta { display:grid; justify-items:end; gap:5px; }.stat-card { padding:13px; }.leave-item { grid-template-columns:1fr; }.leave-actions { justify-content:flex-end; }.workflow-edit-form { grid-template-columns:1fr; }.workflow-edit-form .button { grid-column:auto; justify-self:stretch; }.leave-details { grid-template-columns:1fr; } }
 
-/* IntilljAgency product language: structured, editorial, operational */
+/* Intelligence Agency product language: structured, editorial, operational */
 .app { --surface:#101a2b; --surface-raised:#142238; --surface-hover:#1a2b45; --line:#263953; --blue:#3f8df5; --blue-strong:#216fd7; }
 .app.light { --surface:#ffffff; --surface-raised:#f3f6fa; --surface-hover:#eaf2fb; --line:#d8e2ee; --blue:#176fd4; --blue-strong:#1257ae; }
 .app-frame { background:linear-gradient(135deg,rgba(255,255,255,.015),transparent 28%),var(--bg); }
@@ -1567,4 +1567,38 @@ tbody tr:hover { background:var(--surface-hover); }
   .dashboard-page .page-header,
   .employee-home .page-header { padding-bottom: 14px; }
   .employee-home .employee-hero { align-items: flex-start; padding: 20px; }
+}
+
+/* ---------------------------------------------------------------------------
+   Light theme: sidebar + topbar light like the reference dashboard.
+   These rules come last so they win over the earlier dark sidebar/topbar
+   overrides (same specificity, later in the cascade). The scoped token
+   resets matter: the earlier overrides set dark --text/--muted/--surface
+   tokens inside the sidebar/topbar, which would be unreadable on white.
+   --------------------------------------------------------------------------- */
+.app.light .sidebar {
+  background: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #f3f6fa;
+  --surface-hover: #eaf2fb;
+  --line: #d8e2ee;
+  --text: #0f172a;
+  --muted: #64748b;
+  --muted-2: #94a3b8;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.06);
+}
+
+.app.light .brand-wrap {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.app.light .topbar {
+  background: rgba(255, 255, 255, 0.94);
+  --surface: #ffffff;
+  --surface-raised: #f3f6fa;
+  --surface-hover: #eaf2fb;
+  --line: #d8e2ee;
+  --text: #0f172a;
+  --muted: #64748b;
+  --muted-2: #94a3b8;
 }
