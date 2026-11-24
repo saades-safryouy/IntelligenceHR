@@ -263,9 +263,9 @@ export function DashboardPage() {
 
   // Insight paragraph, built only from the live metrics.
   const insight = [
-    fmt(t.insightActive, { active: metrics.activeEmployees, total: metrics.totalEmployees }),
-    fmt(t.insightPending, { pending: metrics.leavePending }),
-    fmt(t.insightOnboarding, { onboarding: metrics.activeOnboarding }),
+    fmt(metrics.activeEmployees === 1 ? t.insightActiveOne : t.insightActive, { active: metrics.activeEmployees, total: metrics.totalEmployees }),
+    fmt(metrics.leavePending === 1 ? t.insightPendingOne : t.insightPending, { pending: metrics.leavePending }),
+    fmt(metrics.activeOnboarding === 1 ? t.insightOnboardingOne : t.insightOnboarding, { onboarding: metrics.activeOnboarding }),
     fmt(t.insightOnLeave, { onLeave: metrics.onLeaveCount }),
   ].join('. ') + '.'
 
@@ -339,8 +339,8 @@ export function DashboardPage() {
         <div className="ref-wide-head">
           <strong className="ref-wide-value">{metrics.activeEmployees}</strong>
           <span className={`ref-wide-delta ${hiresLast30Days === 0 ? 'neutral' : ''}`}>
-            <ArrowUp size={13} />
-            {fmt(t.newHires30d, { count: hiresLast30Days })}
+            {hiresLast30Days > 0 && <ArrowUp size={13} />}
+            {fmt(hiresLast30Days === 1 ? t.newHires30dOne : t.newHires30d, { count: hiresLast30Days })}
           </span>
         </div>
         <p className="ref-wide-note">{t.workforceOverviewNote}</p>
