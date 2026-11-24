@@ -1,4 +1,4 @@
-import type { AttendanceRecord, Department, EmployeeDocumentRecord, Goal, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { AttendanceRecord, Candidate, Department, EmployeeDocumentRecord, Goal, Holiday, Interview, Job, JobApplication, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
 import type { MockRepository, RepositoryPage } from './mockRepository'
 import { apiData, apiFile, apiRequest, apiUpload } from '../lib/apiClient'
 
@@ -1010,5 +1010,257 @@ export const apiPerformanceActions: PerformanceActions = {
   },
   async deleteGoal(id) {
     await apiData(`/api/v1/goals/${id}`, { method: 'DELETE' })
+  },
+}
+
+export interface RecruitmentActions {
+  listJobs: (filters?: { status?: string; departmentId?: string }) => Promise<Job[]>
+  createJob: (input: {
+    title: string
+    departmentId: string
+    description: string | null
+    location: string
+    employmentType: string
+    status: string
+  }) => Promise<Job>
+  updateJob: (
+    id: string,
+    input: Partial<{
+      title: string
+      departmentId: string
+      description: string | null
+      location: string
+      employmentType: string
+      status: string
+    }>,
+  ) => Promise<Job>
+  deleteJob: (id: string) => Promise<void>
+  listCandidates: () => Promise<Candidate[]>
+  createCandidate: (input: { name: string; email: string; phone?: string | null }) => Promise<Candidate>
+  updateCandidate: (
+    id: string,
+    input: Partial<{ name: string; email: string; phone: string | null }>,
+  ) => Promise<Candidate>
+  deleteCandidate: (id: string) => Promise<void>
+  uploadCv: (candidateId: string, file: File) => Promise<Candidate>
+  listApplications: (filters?: { jobId?: string; stage?: string }) => Promise<JobApplication[]>
+  createApplication: (input: {
+    jobId: number
+    candidateId?: number
+    candidateName?: string
+    candidateEmail?: string
+    candidatePhone?: string
+    notes?: string | null
+  }) => Promise<JobApplication>
+  updateApplication: (
+    id: string,
+    input: Partial<{ stage: string; notes: string | null }>,
+  ) => Promise<JobApplication>
+  deleteApplication: (id: string) => Promise<void>
+  listInterviews: (filters?: { applicationId?: string }) => Promise<Interview[]>
+  createInterview: (input: {
+    applicationId: number
+    scheduledAt: string
+    interviewer: string | null
+    notes: string | null
+  }) => Promise<Interview>
+  updateInterview: (
+    id: string,
+    input: Partial<{ scheduledAt: string; interviewer: string | null; notes: string | null; outcome: string }>,
+  ) => Promise<Interview>
+  deleteInterview: (id: string) => Promise<void>
+}
+
+function jobFromApi(row: Record<string, unknown>): Job {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    departmentId: String(row.department_id ?? ''),
+    department: (row.department as string | null) ?? null,
+    description: (row.description as string | null) ?? null,
+    location: String(row.location ?? 'Casablanca'),
+    employmentType: String(row.employment_type ?? 'Full-time'),
+    status: (row.status as Job['status']) ?? 'open',
+    applicationsCount: (row.applications_count as number | null) ?? null,
+  }
+}
+
+function jobToApi(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  if (input.title !== undefined) out.title = input.title
+  if (input.departmentId !== undefined) out.department_id = input.departmentId
+  if (input.description !== undefined) out.description = input.description
+  if (input.location !== undefined) out.location = input.location
+  if (input.employmentType !== undefined) out.employment_type = input.employmentType
+  if (input.status !== undefined) out.status = input.status
+  return out
+}
+
+function candidateFromApi(row: Record<string, unknown>): Candidate {
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ''),
+    email: String(row.email ?? ''),
+    phone: (row.phone as string | null) ?? null,
+    cvPath: (row.cv_path as string | null) ?? null,
+    cvMime: (row.cv_mime as string | null) ?? null,
+    cvSize: (row.cv_size as number | null) ?? null,
+    hasCv: Boolean(row.has_cv),
+  }
+}
+
+function applicationFromApi(row: Record<string, unknown>): JobApplication {
+  return {
+    id: String(row.id),
+    jobId: String(row.job_id),
+    job: (row.job as string | null) ?? null,
+    candidateId: String(row.candidate_id),
+    candidate: (row.candidate as string | null) ?? null,
+    candidateEmail: (row.candidate_email as string | null) ?? null,
+    stage: (row.stage as JobApplication['stage']) ?? 'applied',
+    notes: (row.notes as string | null) ?? null,
+    onboardingCaseId: (row.onboarding_case_id as string | null) ?? null,
+  }
+}
+
+function interviewFromApi(row: Record<string, unknown>): Interview {
+  return {
+    id: String(row.id),
+    applicationId: String(row.application_id),
+    application: (row.application as string | null) ?? null,
+    scheduledAt: (row.scheduled_at as string | null) ?? null,
+    interviewer: (row.interviewer as string | null) ?? null,
+    notes: (row.notes as string | null) ?? null,
+    outcome: (row.outcome as Interview['outcome']) ?? 'pending',
+  }
+}
+
+/** Recruitment — server-backed (see /api/v1/jobs, /candidates, /job-applications, /interviews). */
+export const apiRecruitmentActions: RecruitmentActions = {
+  async listJobs(filters) {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set('status', filters.status)
+    if (filters?.departmentId) params.set('department_id', filters.departmentId)
+    const query = params.toString()
+    const rows = await apiData<Record<string, unknown>[]>(
+      `/api/v1/jobs${query ? `?${query}` : ''}`,
+    )
+    return rows.map(jobFromApi)
+  },
+  async createJob(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/jobs', {
+      method: 'POST',
+      body: JSON.stringify(jobToApi(input as unknown as Record<string, unknown>)),
+    })
+    return jobFromApi(row)
+  },
+  async updateJob(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/jobs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(jobToApi(input as unknown as Record<string, unknown>)),
+    })
+    return jobFromApi(row)
+  },
+  async deleteJob(id) {
+    await apiData(`/api/v1/jobs/${id}`, { method: 'DELETE' })
+  },
+  async listCandidates() {
+    const rows = await apiData<Record<string, unknown>[]>('/api/v1/candidates')
+    return rows.map(candidateFromApi)
+  },
+  async createCandidate(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/candidates', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+    return candidateFromApi(row)
+  },
+  async updateCandidate(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/candidates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    })
+    return candidateFromApi(row)
+  },
+  async deleteCandidate(id) {
+    await apiData(`/api/v1/candidates/${id}`, { method: 'DELETE' })
+  },
+  async uploadCv(candidateId, file) {
+    const form = new FormData()
+    form.append('cv', file)
+    const payload = await apiUpload<{ data: Record<string, unknown> }>(
+      `/api/v1/candidates/${candidateId}/cv`,
+      form,
+    )
+    return candidateFromApi(payload.data)
+  },
+  async listApplications(filters) {
+    const params = new URLSearchParams()
+    if (filters?.jobId) params.set('job_id', filters.jobId)
+    if (filters?.stage) params.set('stage', filters.stage)
+    const query = params.toString()
+    const rows = await apiData<Record<string, unknown>[]>(
+      `/api/v1/job-applications${query ? `?${query}` : ''}`,
+    )
+    return rows.map(applicationFromApi)
+  },
+  async createApplication(input) {
+    const body: Record<string, unknown> = { job_id: input.jobId }
+    if (input.candidateId !== undefined) body.candidate_id = input.candidateId
+    if (input.candidateName !== undefined) body.candidate_name = input.candidateName
+    if (input.candidateEmail !== undefined) body.candidate_email = input.candidateEmail
+    if (input.candidatePhone !== undefined) body.candidate_phone = input.candidatePhone
+    if (input.notes !== undefined) body.notes = input.notes
+    const row = await apiData<Record<string, unknown>>('/api/v1/job-applications', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return applicationFromApi(row)
+  },
+  async updateApplication(id, input) {
+    const row = await apiData<Record<string, unknown>>(`/api/v1/job-applications/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    })
+    return applicationFromApi(row)
+  },
+  async deleteApplication(id) {
+    await apiData(`/api/v1/job-applications/${id}`, { method: 'DELETE' })
+  },
+  async listInterviews(filters) {
+    const params = new URLSearchParams()
+    if (filters?.applicationId) params.set('application_id', filters.applicationId)
+    const query = params.toString()
+    const rows = await apiData<Record<string, unknown>[]>(
+      `/api/v1/interviews${query ? `?${query}` : ''}`,
+    )
+    return rows.map(interviewFromApi)
+  },
+  async createInterview(input) {
+    const row = await apiData<Record<string, unknown>>('/api/v1/interviews', {
+      method: 'POST',
+      body: JSON.stringify({
+        application_id: input.applicationId,
+        scheduled_at: input.scheduledAt,
+        interviewer: input.interviewer,
+        notes: input.notes,
+      }),
+    })
+    return interviewFromApi(row)
+  },
+  async updateInterview(id, input) {
+    const body: Record<string, unknown> = {}
+    if (input.scheduledAt !== undefined) body.scheduled_at = input.scheduledAt
+    if (input.interviewer !== undefined) body.interviewer = input.interviewer
+    if (input.notes !== undefined) body.notes = input.notes
+    if (input.outcome !== undefined) body.outcome = input.outcome
+    const row = await apiData<Record<string, unknown>>(`/api/v1/interviews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+    return interviewFromApi(row)
+  },
+  async deleteInterview(id) {
+    await apiData(`/api/v1/interviews/${id}`, { method: 'DELETE' })
   },
 }

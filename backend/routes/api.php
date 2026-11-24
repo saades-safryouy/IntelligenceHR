@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\TrainingController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -120,6 +121,26 @@ Route::prefix('v1')->group(function () {
 
         // Audit log
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+        // Recruitment
+        Route::get('jobs', [RecruitmentController::class, 'indexJobs']);
+        Route::post('jobs', [RecruitmentController::class, 'storeJob']);
+        Route::put('jobs/{job}', [RecruitmentController::class, 'updateJob']);
+        Route::delete('jobs/{job}', [RecruitmentController::class, 'destroyJob']);
+        Route::get('candidates', [RecruitmentController::class, 'indexCandidates']);
+        Route::post('candidates', [RecruitmentController::class, 'storeCandidate']);
+        Route::patch('candidates/{candidate}', [RecruitmentController::class, 'updateCandidate']);
+        Route::delete('candidates/{candidate}', [RecruitmentController::class, 'destroyCandidate']);
+        Route::post('candidates/{candidate}/cv', [RecruitmentController::class, 'uploadCv']);
+        Route::get('candidates/{candidate}/cv', [RecruitmentController::class, 'downloadCv']);
+        Route::get('job-applications', [RecruitmentController::class, 'indexApplications']);
+        Route::post('job-applications', [RecruitmentController::class, 'storeApplication']);
+        Route::patch('job-applications/{jobApplication}', [RecruitmentController::class, 'updateApplication']);
+        Route::delete('job-applications/{jobApplication}', [RecruitmentController::class, 'destroyApplication']);
+        Route::get('interviews', [RecruitmentController::class, 'indexInterviews']);
+        Route::post('interviews', [RecruitmentController::class, 'storeInterview']);
+        Route::patch('interviews/{interview}', [RecruitmentController::class, 'updateInterview']);
+        Route::delete('interviews/{interview}', [RecruitmentController::class, 'destroyInterview']);
 
         // Performance
         Route::get('review-cycles', [PerformanceController::class, 'indexCycles']);

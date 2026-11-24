@@ -9,6 +9,9 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\Goal;
+use App\Models\Interview;
+use App\Models\Job;
+use App\Models\JobApplication;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
@@ -16,6 +19,7 @@ use App\Models\Notification;
 use App\Models\OffboardingCase;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
+use App\Models\Candidate;
 use App\Models\PerformanceReview;
 use App\Models\ReviewCycle;
 use App\Models\TrainingCourse;
@@ -222,6 +226,71 @@ class ApiPresenter
             'leave_request_id' => (string) $leave->id,
             'created_at' => null,
             'updated_at' => null,
+        ];
+    }
+
+    public static function job(Job $j): array
+    {
+        return [
+            'id' => (string) $j->id,
+            'title' => $j->title,
+            'department_id' => $j->department_id,
+            'department' => $j->department ? $j->department->name : null,
+            'description' => $j->description,
+            'location' => $j->location,
+            'employment_type' => $j->employment_type,
+            'status' => $j->status,
+            'applications_count' => $j->applications_count ?? $j->applications()->count(),
+            'created_at' => $j->created_at?->toISOString(),
+            'updated_at' => $j->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function candidate(Candidate $c): array
+    {
+        return [
+            'id' => (string) $c->id,
+            'name' => $c->name,
+            'email' => $c->email,
+            'phone' => $c->phone,
+            'cv_path' => $c->cv_path,
+            'cv_mime' => $c->cv_mime,
+            'cv_size' => $c->cv_size !== null ? (int) $c->cv_size : null,
+            'has_cv' => $c->cv_path !== null,
+            'created_at' => $c->created_at?->toISOString(),
+            'updated_at' => $c->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function jobApplication(JobApplication $a): array
+    {
+        return [
+            'id' => (string) $a->id,
+            'job_id' => (string) $a->job_id,
+            'job' => $a->job ? $a->job->title : null,
+            'candidate_id' => (string) $a->candidate_id,
+            'candidate' => $a->candidate ? $a->candidate->name : null,
+            'candidate_email' => $a->candidate ? $a->candidate->email : null,
+            'stage' => $a->stage,
+            'notes' => $a->notes,
+            'onboarding_case_id' => $a->onboarding_case_id !== null ? (string) $a->onboarding_case_id : null,
+            'created_at' => $a->created_at?->toISOString(),
+            'updated_at' => $a->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function interview(Interview $i): array
+    {
+        return [
+            'id' => (string) $i->id,
+            'application_id' => (string) $i->application_id,
+            'application' => $i->application && $i->application->candidate ? $i->application->candidate->name : null,
+            'scheduled_at' => $i->scheduled_at?->toISOString(),
+            'interviewer' => $i->interviewer,
+            'notes' => $i->notes,
+            'outcome' => $i->outcome,
+            'created_at' => $i->created_at?->toISOString(),
+            'updated_at' => $i->updated_at?->toISOString(),
         ];
     }
 

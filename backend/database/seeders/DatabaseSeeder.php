@@ -13,6 +13,10 @@ use App\Models\Notification;
 use App\Models\OnboardingCase;
 use App\Models\OnboardingTask;
 use App\Models\AttendanceRecord;
+use App\Models\Candidate;
+use App\Models\Interview;
+use App\Models\Job;
+use App\Models\JobApplication;
 use App\Models\PerformanceReview;
 use App\Models\ReviewCycle;
 use App\Models\TrainingCourse;
@@ -131,6 +135,48 @@ class DatabaseSeeder extends Seeder
         ] as $h) {
             Holiday::updateOrCreate(['name' => $h['name'], 'date' => $h['date']], $h);
         }
+
+        // --- Recruitment ---
+        $supportJob = Job::updateOrCreate(
+            ['title' => 'IT Support Technician'],
+            ['department_id' => 'eng', 'description' => 'First and second line IT support for internal users: accounts, workstations, tickets and peripherals.', 'location' => 'Casablanca', 'employment_type' => 'Full-time', 'status' => 'open']
+        );
+        $hrJob = Job::updateOrCreate(
+            ['title' => 'HR Assistant'],
+            ['department_id' => 'people', 'description' => 'Support the HR team with onboarding, leave administration and employee records.', 'location' => 'Casablanca', 'employment_type' => 'Full-time', 'status' => 'open']
+        );
+        Job::updateOrCreate(
+            ['title' => 'Warehouse Operator'],
+            ['department_id' => 'ops', 'description' => 'Picking, packing and stock control in the Casablanca warehouse.', 'location' => 'Casablanca', 'employment_type' => 'Full-time', 'status' => 'closed']
+        );
+        $yassine = Candidate::updateOrCreate(
+            ['email' => 'yassine.elfassi@example.com'],
+            ['name' => 'Yassine El Fassi', 'phone' => '+212600111222']
+        );
+        $sara = Candidate::updateOrCreate(
+            ['email' => 'sara.idrissi@example.com'],
+            ['name' => 'Sara Idrissi', 'phone' => '+212600333444']
+        );
+        $omar = Candidate::updateOrCreate(
+            ['email' => 'omar.tazi@example.com'],
+            ['name' => 'Omar Tazi', 'phone' => '+212600555666']
+        );
+        $yassineApp = JobApplication::updateOrCreate(
+            ['job_id' => $supportJob->id, 'candidate_id' => $yassine->id],
+            ['stage' => 'interview', 'notes' => 'Strong ServiceNow experience.']
+        );
+        JobApplication::updateOrCreate(
+            ['job_id' => $supportJob->id, 'candidate_id' => $sara->id],
+            ['stage' => 'screening', 'notes' => 'CV review in progress.']
+        );
+        JobApplication::updateOrCreate(
+            ['job_id' => $hrJob->id, 'candidate_id' => $omar->id],
+            ['stage' => 'applied', 'notes' => null]
+        );
+        Interview::updateOrCreate(
+            ['application_id' => $yassineApp->id, 'scheduled_at' => '2026-11-26 10:00:00'],
+            ['interviewer' => 'Nadia Rahmani', 'notes' => 'Technical interview.', 'outcome' => 'pending']
+        );
 
         // --- Performance ---
         $annual = ReviewCycle::updateOrCreate(

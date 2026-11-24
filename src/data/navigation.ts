@@ -98,6 +98,11 @@ export const navItems: NavItem[] = [
     label: 'performance',
     icon: BarChart3,
   },
+  {
+    to: '/app/recruitment',
+    label: 'recruitment',
+    icon: BriefcaseBusiness,
+  },
    {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
@@ -123,12 +128,6 @@ export const navItems: NavItem[] = [
 ]
 
 export const futureModules = [
-  {
-    path: '/app/recruitment',
-    title: 'Recruitment',
-    detail: 'Connect future hiring workflows directly to onboarding.',
-    icon: BriefcaseBusiness,
-  },
   {
     path: '/app/payroll',
     title: 'Payroll & Compensation',

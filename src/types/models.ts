@@ -307,6 +307,51 @@ export interface Goal {
   progress: number
 }
 
+export interface Job {
+  id: string
+  title: string
+  departmentId: string
+  department?: string | null
+  description?: string | null
+  location: string
+  employmentType: string
+  status: 'open' | 'closed'
+  applicationsCount?: number | null
+}
+
+export interface Candidate {
+  id: string
+  name: string
+  email: string
+  phone?: string | null
+  cvPath?: string | null
+  cvMime?: string | null
+  cvSize?: number | null
+  hasCv: boolean
+}
+
+export interface JobApplication {
+  id: string
+  jobId: string
+  job?: string | null
+  candidateId: string
+  candidate?: string | null
+  candidateEmail?: string | null
+  stage: 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected'
+  notes?: string | null
+  onboardingCaseId?: string | null
+}
+
+export interface Interview {
+  id: string
+  applicationId: string
+  application?: string | null
+  scheduledAt?: string | null
+  interviewer?: string | null
+  notes?: string | null
+  outcome: 'pending' | 'passed' | 'failed'
+}
+
 export interface TrainingCourse {
   id: string
   title: string

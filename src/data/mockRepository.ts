@@ -19,11 +19,11 @@ import {
   updateEmployee,
   updateOnboardingTask,
 } from './employeeStore'
-import type { Department, Employee, EmployeeDocumentRecord, Goal, Holiday, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
+import type { Candidate, Department, Employee, EmployeeDocumentRecord, Goal, Holiday, Interview, Job, JobApplication, LeaveRequest, OffboardingRequest, OnboardingRequest, PerformanceReview, ReviewCycle, TrainingCourse, TrainingEnrollment } from '../types/models'
 import { isApiDataMode, apiRequest } from '../lib/apiClient'
 import { apiEmployeeRepository } from './apiEmployeeRepository'
-import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions, apiPerformanceActions } from './apiDomainRepositories'
-import type { AttendanceFilters, PerformanceActions } from './apiDomainRepositories'
+import { apiLeaveRepository, apiDepartmentRepository, apiHolidayRepository, apiOnboardingRepository, apiOffboardingRepository, apiDocumentRepository, apiTrainingCourseRepository, apiTrainingEnrollmentRepository, apiAttendanceActions, apiPerformanceActions, apiRecruitmentActions } from './apiDomainRepositories'
+import type { AttendanceFilters, PerformanceActions, RecruitmentActions } from './apiDomainRepositories'
 import type { AttendanceRecord } from '../types/models'
 import { departments } from './mock'
 
@@ -243,6 +243,28 @@ export const trainingCourseRepository = isApiDataMode
       update: (_id, _updates) => null,
       delete: () => true,
     })
+
+export const recruitmentActions: RecruitmentActions = isApiDataMode
+  ? apiRecruitmentActions
+  : {
+      listJobs: () => Promise.resolve([]),
+      createJob: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      updateJob: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      deleteJob: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      listCandidates: () => Promise.resolve([]),
+      createCandidate: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      updateCandidate: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      deleteCandidate: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      uploadCv: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      listApplications: () => Promise.resolve([]),
+      createApplication: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      updateApplication: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      deleteApplication: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      listInterviews: () => Promise.resolve([]),
+      createInterview: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      updateInterview: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+      deleteInterview: () => Promise.reject(new Error('Recruitment is not available in demo mode.')),
+    }
 
 export const performanceActions: PerformanceActions = isApiDataMode
   ? apiPerformanceActions

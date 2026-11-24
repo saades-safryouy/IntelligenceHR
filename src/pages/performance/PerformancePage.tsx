@@ -60,7 +60,7 @@ function ratingStars(rating: number | null): string {
   return '★'.repeat(rating) + '☆'.repeat(5 - rating)
 }
 
-export default function PerformancePage(): React.JSX.Element {
+export function PerformancePage(): React.JSX.Element {
   const { t } = useI18n()
   const { currentUser, isHR, hasPermission } = useAuth()
   const [tab, setTab] = useState<Tab>('reviews')
@@ -842,3 +842,5 @@ export default function PerformancePage(): React.JSX.Element {
     </div>
   )
 }
+
+export default PerformancePage
