@@ -199,6 +199,14 @@ function GrowthChart({ data, reducedMotion }: {
         transition={{ duration: reducedMotion ? 0 : 0.8, ease: 'easeOut', delay: reducedMotion ? 0 : 0.1 }}
       />
 
+      {/* Permanent data-point markers on both lines (always visible, both themes). */}
+      {head.map((p, i) => (
+        <circle key={`head-${i}`} cx={p.x} cy={p.y} r={3.5} className="wa-point-head" />
+      ))}
+      {hire.map((p, i) => (
+        <circle key={`hire-${i}`} cx={p.x} cy={p.y} r={3.5} className="wa-point-hires" />
+      ))}
+
       {active !== null && (
         <g pointerEvents="none">
           <line x1={xOf(active)} x2={xOf(active)} y1={top} y2={baseline} className="wa-guide" />
