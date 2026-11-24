@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +31,11 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::get('me/permissions', [AuthController::class, 'permissions']);
 
+        // Users & roles admin (HR only, enforced in the controller)
+        Route::get('users', [UserController::class, 'index']);
+        Route::patch('users/{user}', [UserController::class, 'update']);
+        Route::get('roles', [UserController::class, 'roles']);
+
         // Employees — /summary must be registered before /{employee}.
         Route::get('employees/summary', [EmployeeController::class, 'summary']);
         Route::get('employees', [EmployeeController::class, 'index']);
@@ -43,6 +50,9 @@ Route::prefix('v1')->group(function () {
         Route::post('leave-requests', [LeaveController::class, 'store']);
         Route::delete('leave-requests/{leaveRequest}', [LeaveController::class, 'destroy']);
         Route::get('leave-types', [LeaveController::class, 'leaveTypes']);
+        Route::post('leave-types', [LeaveController::class, 'storeLeaveType']);
+        Route::put('leave-types/{leaveType}', [LeaveController::class, 'updateLeaveType']);
+        Route::delete('leave-types/{leaveType}', [LeaveController::class, 'destroyLeaveType']);
 
         // Departments
         Route::get('departments', [DepartmentController::class, 'index']);
@@ -98,6 +108,12 @@ Route::prefix('v1')->group(function () {
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::patch('notifications/{notification}/read', [NotificationController::class, 'read']);
         Route::post('notifications/read', [NotificationController::class, 'readMany']);
+
+        // Calendar custom events (owner-scoped, HR sees all)
+        Route::get('calendar-events', [CalendarEventController::class, 'index']);
+        Route::post('calendar-events', [CalendarEventController::class, 'store']);
+        Route::patch('calendar-events/{calendarEvent}', [CalendarEventController::class, 'update']);
+        Route::delete('calendar-events/{calendarEvent}', [CalendarEventController::class, 'destroy']);
 
         // Audit log
         Route::get('audit-logs', [AuditLogController::class, 'index']);

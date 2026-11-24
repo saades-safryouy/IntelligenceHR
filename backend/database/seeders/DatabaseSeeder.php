@@ -35,9 +35,9 @@ class DatabaseSeeder extends Seeder
 
         // --- Leave types ---
         foreach ([
-            ['id' => 'annual', 'code' => 'ANNUAL', 'name_key' => 'leave.annual', 'color' => '#3b82f6', 'paid' => true],
-            ['id' => 'sick', 'code' => 'SICK', 'name_key' => 'leave.sick', 'color' => '#f59e0b', 'paid' => true],
-            ['id' => 'unpaid', 'code' => 'UNPAID', 'name_key' => 'leave.unpaid', 'color' => '#a78bfa', 'paid' => false],
+            ['id' => 'annual', 'code' => 'ANNUAL', 'name_key' => 'leave.annual', 'color' => '#3b82f6', 'paid' => true, 'default_entitlement_days' => 25, 'carry_over_days' => 5, 'requires_approval' => true],
+            ['id' => 'sick', 'code' => 'SICK', 'name_key' => 'leave.sick', 'color' => '#f59e0b', 'paid' => true, 'default_entitlement_days' => 12, 'carry_over_days' => 0, 'requires_approval' => true],
+            ['id' => 'unpaid', 'code' => 'UNPAID', 'name_key' => 'leave.unpaid', 'color' => '#a78bfa', 'paid' => false, 'default_entitlement_days' => 30, 'carry_over_days' => 0, 'requires_approval' => true],
         ] as $lt) {
             LeaveType::updateOrCreate(['id' => $lt['id']], $lt);
         }

@@ -111,6 +111,61 @@ class LeaveController extends Controller
             ->map(fn ($t) => ApiPresenter::leaveType($t))->values()->all()]);
     }
 
+    /** POST /leave-types — HR only. */
+    public function storeLeaveType(Request $request)
+    {
+        if (! $this->can('people.employee.create')) {
+            return $this->forbidden();
+        }
+        $data = $request->validate([
+            'id' => ['required', 'string', 'max:50', 'unique:leave_types,id'],
+            'code' => ['nullable', 'string', 'max:50'],
+            'name_key' => ['required', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'max:20'],
+            'paid' => ['nullable', 'boolean'],
+            'default_entitlement_days' => ['nullable', 'integer', 'min:0'],
+            'carry_over_days' => ['nullable', 'integer', 'min:0'],
+            'requires_approval' => ['nullable', 'boolean'],
+        ]);
+        $type = LeaveType::create($data);
+        $this->logAudit('leave_type.created', 'leave_type', $type->id, $type->name_key);
+
+        return response()->json(['data' => ApiPresenter::leaveType($type)], 201);
+    }
+
+    /** PUT /leave-types/{leaveType} — HR only. */
+    public function updateLeaveType(Request $request, LeaveType $leaveType)
+    {
+        if (! $this->can('people.employee.update')) {
+            return $this->forbidden();
+        }
+        $data = $request->validate([
+            'code' => ['nullable', 'string', 'max:50'],
+            'name_key' => ['sometimes', 'required', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'max:20'],
+            'paid' => ['nullable', 'boolean'],
+            'default_entitlement_days' => ['nullable', 'integer', 'min:0'],
+            'carry_over_days' => ['nullable', 'integer', 'min:0'],
+            'requires_approval' => ['nullable', 'boolean'],
+        ]);
+        $leaveType->update($data);
+        $this->logAudit('leave_type.updated', 'leave_type', $leaveType->id, $leaveType->name_key);
+
+        return response()->json(['data' => ApiPresenter::leaveType($leaveType)]);
+    }
+
+    /** DELETE /leave-types/{leaveType} — HR only. */
+    public function destroyLeaveType(LeaveType $leaveType)
+    {
+        if (! $this->can('people.employee.update')) {
+            return $this->forbidden();
+        }
+        $leaveType->delete();
+        $this->logAudit('leave_type.deleted', 'leave_type', $leaveType->id, $leaveType->name_key);
+
+        return response()->noContent();
+    }
+
     /** Working days between two dates, excluding weekends (Sat/Sun) and holidays; half-days count 0.5. */
     private function workingDays(string $start, string $end, string $fromHalf, string $toHalf): float
     {

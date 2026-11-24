@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AuditLog;
+use App\Models\CalendarEvent;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
@@ -134,6 +135,9 @@ class ApiPresenter
             'name_key' => $t->name_key,
             'color' => $t->color,
             'paid' => (bool) $t->paid,
+            'default_entitlement_days' => (int) ($t->default_entitlement_days ?? 0),
+            'carry_over_days' => (int) ($t->carry_over_days ?? 0),
+            'requires_approval' => (bool) ($t->requires_approval ?? true),
         ];
         if ($withCode) {
             $out = ['id' => $t->id, 'code' => $t->code] + $out;
@@ -169,6 +173,34 @@ class ApiPresenter
             'resource_id' => $l->resource_id,
             'details' => $l->details,
             'created_at' => $l->created_at?->toISOString(),
+        ];
+    }
+
+    public static function calendarEvent(CalendarEvent $e): array
+    {
+        return [
+            'id' => (string) $e->id,
+            'user_id' => $e->user_id ? (string) $e->user_id : null,
+            'title' => $e->title,
+            'type' => $e->type,
+            'start_date' => $e->start_date?->toDateString(),
+            'end_date' => $e->end_date?->toDateString(),
+            'note' => $e->note,
+            'created_at' => $e->created_at?->toISOString(),
+            'updated_at' => $e->updated_at?->toISOString(),
+        ];
+    }
+
+    public static function user(User $u): array
+    {
+        return [
+            'id' => (string) $u->id,
+            'name' => $u->name,
+            'email' => $u->email,
+            'roles' => $u->roles ?? [],
+            'employee_id' => $u->employee_id,
+            'employee' => $u->employee ? $u->employee->first_name.' '.$u->employee->last_name : null,
+            'created_at' => $u->created_at?->toISOString(),
         ];
     }
 

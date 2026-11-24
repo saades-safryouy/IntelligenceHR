@@ -16,6 +16,6 @@ class LeaveType extends Model
 
     protected function casts(): array
     {
-        return ['paid' => 'boolean'];
+        return ['paid' => 'boolean', 'default_entitlement_days' => 'integer', 'carry_over_days' => 'integer', 'requires_approval' => 'boolean'];
     }
 }
