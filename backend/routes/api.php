@@ -13,6 +13,11 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PayrollClientConfigController;
+use App\Http\Controllers\PayrollComponentController;
+use App\Http\Controllers\PayrollParameterController;
+use App\Http\Controllers\PayrollRunController;
+use App\Http\Controllers\PayrollStructureController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\TrainingController;
@@ -176,6 +181,33 @@ Route::prefix('v1')->group(function () {
         Route::post('training-enrollments', [TrainingController::class, 'storeEnrollment']);
         Route::patch('training-enrollments/{trainingEnrollment}', [TrainingController::class, 'updateEnrollment']);
         Route::delete('training-enrollments/{trainingEnrollment}', [TrainingController::class, 'destroyEnrollment']);
+
+        // Payroll (P3: runs, structures, components, client config, parameters).
+        // No PDF / exports here (P4/P5). POST /payroll/parameters and the
+        // jurisdiction enable endpoint are deliberately not registered:
+        // legal parameters are read-only in P3 and profiles are enabled
+        // by a platform admin only (D-16).
+        Route::get('payroll/parameters', [PayrollParameterController::class, 'index']);
+        Route::get('payroll/jurisdictions', [PayrollParameterController::class, 'jurisdictions']);
+        Route::get('payroll/components', [PayrollComponentController::class, 'index']);
+        Route::post('payroll/components', [PayrollComponentController::class, 'store']);
+        Route::patch('payroll/components/{component}', [PayrollComponentController::class, 'update']);
+        Route::get('payroll/salary-structures', [PayrollStructureController::class, 'index']);
+        Route::post('payroll/salary-structures', [PayrollStructureController::class, 'store']);
+        Route::patch('payroll/salary-structures/{structure}', [PayrollStructureController::class, 'update']);
+        Route::get('payroll/client-config', [PayrollClientConfigController::class, 'show']);
+        Route::patch('payroll/client-config', [PayrollClientConfigController::class, 'update']);
+        Route::get('payroll/runs', [PayrollRunController::class, 'index']);
+        Route::post('payroll/runs', [PayrollRunController::class, 'store']);
+        Route::get('payroll/runs/{run}', [PayrollRunController::class, 'show']);
+        Route::post('payroll/runs/{run}/calculate', [PayrollRunController::class, 'calculate']);
+        Route::post('payroll/runs/{run}/validate', [PayrollRunController::class, 'validate']);
+        Route::post('payroll/runs/{run}/approve', [PayrollRunController::class, 'approve']);
+        Route::post('payroll/runs/{run}/close', [PayrollRunController::class, 'close']);
+        Route::post('payroll/runs/{run}/send-back', [PayrollRunController::class, 'sendBack']);
+        Route::get('payroll/runs/{run}/payslips', [PayrollRunController::class, 'payslips']);
+        Route::get('payroll/payslips/{payslip}', [PayrollRunController::class, 'showPayslip']);
+        Route::get('payroll/my-payslips', [PayrollRunController::class, 'myPayslips']);
 
         // Org chart, dashboards, analytics
         Route::get('org-chart', [DashboardController::class, 'orgChart']);

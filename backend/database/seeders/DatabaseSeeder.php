@@ -376,5 +376,11 @@ class DatabaseSeeder extends Seeder
         // validated yet) + the MA enablement row for the Demo Company
         // tenant (status disabled — D-16, platform admin enables it).
         $this->call(MoroccoPayrollParametersSeeder::class);
+
+        // --- Payroll — demo structures + default client config (P3) ---
+        // Structural components, one demo salary structure per demo
+        // employee, demo CNSS numbers/dependants, default client
+        // config v1. Idempotent — never overwrites HR edits.
+        $this->call(PayrollDemoSeeder::class);
     }
 }
