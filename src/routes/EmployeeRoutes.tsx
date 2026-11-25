@@ -12,6 +12,7 @@ import { EmployeeOnboardingPage } from '../pages/employee/EmployeeOnboardingPage
 import { EmployeeOrganigramPage } from '../pages/employee/EmployeeOrganigramPage'
 import { EmployeeProfilePage } from '../pages/employee/EmployeeProfilePage'
 import { EmployeeWorkflowsPage } from '../pages/employee/EmployeeWorkflowsPage'
+import { MyPayslipsPage } from '../pages/payroll/MyPayslipsPage'
 import { WorkflowDetailPage } from '../pages/workflow/WorkflowDetailPage'
 import { EMPLOYEE_ROLES } from './roles'
 import type { LayoutShellProps } from './shell'
@@ -46,6 +47,7 @@ export function renderEmployeeRoutes(shell: LayoutShellProps) {
       <Route path="organigram" element={<EmployeeOrganigramPage />} />
       <Route path="workflows" element={<EmployeeWorkflowsPage />} />
       <Route path="workflows/:instanceId" element={<WorkflowDetailPage />} />
+      <Route path="payslips" element={<MyPayslipsPage />} />
     </Route>
   )
 }

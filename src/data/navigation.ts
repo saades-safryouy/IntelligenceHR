@@ -103,7 +103,13 @@ export const navItems: NavItem[] = [
     label: 'recruitment',
     icon: BriefcaseBusiness,
   },
-   {
+  {
+    to: '/app/payroll',
+    label: 'payroll',
+    icon: WalletCards,
+    permissions: ['payroll.run.view'],
+  },
+  {
     to: '/app/intelligence/ask',
     label: 'askIntelligence',
     icon: BriefcaseBusiness,
@@ -127,11 +133,4 @@ export const navItems: NavItem[] = [
  
 ]
 
-export const futureModules = [
-  {
-    path: '/app/payroll',
-    title: 'Payroll & Compensation',
-    detail: 'Compensation intelligence will connect to the employee profile.',
-    icon: WalletCards,
-  },
-]
+export const futureModules: Array<{ path: string; title: string; detail: string; icon: typeof LayoutDashboard }> = []

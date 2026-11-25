@@ -60,6 +60,7 @@ export function AppLayout({
     attendance: translations[language].attendance,
     performance: translations[language].performance,
     recruitment: translations[language].recruitment,
+    payroll: translations[language].payroll,
     reports: translations[language].reports,
     workflows: translations[language].workflows,
     settings: translations[language].settings,
@@ -103,19 +104,21 @@ export function AppLayout({
           ))}
         </nav>
 
-        <div className="sidebar-group">
-          <small>{text('EXTENDED MODULES')}</small>
-          {futureModules.map(({ path, title, icon: Icon }) => (
-            <NavLink
-              key={path}
-              to={path}
-              onClick={() => setMobileOpen(false)}
-            >
-              <Icon size={16} />
-              <span>{text(title)}</span>
-            </NavLink>
-          ))}
-        </div>
+        {futureModules.length > 0 ? (
+          <div className="sidebar-group">
+            <small>{text('EXTENDED MODULES')}</small>
+            {futureModules.map(({ path, title, icon: Icon }) => (
+              <NavLink
+                key={path}
+                to={path}
+                onClick={() => setMobileOpen(false)}
+              >
+                <Icon size={16} />
+                <span>{text(title)}</span>
+              </NavLink>
+            ))}
+          </div>
+        ) : null}
 
         <div className="sidebar-bottom">
           <div className="sidebar-help">

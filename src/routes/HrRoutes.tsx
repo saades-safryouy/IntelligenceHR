@@ -15,6 +15,12 @@ import { LeavePage } from '../pages/leave/LeavePage'
 import { OffboardingPage } from '../pages/offboarding/OffboardingPage'
 import { OnboardingPage } from '../pages/onboarding/OnboardingPage'
 import { PayrollPage } from '../pages/payroll/PayrollPage'
+import { PayrollRunDetailPage } from '../pages/payroll/PayrollRunDetailPage'
+import { SalaryStructuresPage } from '../pages/payroll/SalaryStructuresPage'
+import { ComponentsPage } from '../pages/payroll/ComponentsPage'
+import { ParametersPage } from '../pages/payroll/ParametersPage'
+import { ClientConfigPage } from '../pages/payroll/ClientConfigPage'
+import { MyPayslipsPage } from '../pages/payroll/MyPayslipsPage'
 import { EmployeeShowcasePage } from '../pages/people/EmployeeShowcasePage'
 import { OrganigrammePage } from '../pages/people/OrganigrammePage'
 import { PeoplePage } from '../pages/people/PeoplePage'
@@ -68,6 +74,12 @@ export function renderHrRoutes(shell: LayoutShellProps) {
       <Route path="performance" element={<PerformancePage />} />
       <Route path="training" element={<TrainingPage />} />
       <Route path="payroll" element={<PayrollPage />} />
+      <Route path="payroll/runs/:id" element={<PayrollRunDetailPage />} />
+      <Route path="payroll/salary-structures" element={<SalaryStructuresPage />} />
+      <Route path="payroll/components" element={<ComponentsPage />} />
+      <Route path="payroll/parameters" element={<ParametersPage />} />
+      <Route path="payroll/client-config" element={<ClientConfigPage />} />
+      <Route path="payroll/my-payslips" element={<MyPayslipsPage />} />
       <Route path="intelligence/ask" element={<AskIntelligencePage />} />
       <Route path="automations" element={<AutomationsPage />} />
     </Route>

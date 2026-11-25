@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
   Sun,
   User,
+  WalletCards,
   Workflow,
   Network,
   X,
@@ -78,6 +79,7 @@ export function EmployeeLayout({
     { label: 'Organization', path: '/employee/organigram', icon: Network },
     { label: 'Workflows', path: '/employee/workflows', icon: Workflow },
     { label: 'Documents', path: '/employee/documents', icon: FolderOpen },
+    { label: 'My Payslips', path: '/employee/payslips', icon: WalletCards },
   ]
 
   const handleLogout = () => {

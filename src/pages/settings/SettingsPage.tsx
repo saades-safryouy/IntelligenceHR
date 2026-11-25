@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CheckCircle2, ChevronRight } from 'lucide-react'
 import { PageHeader } from '../../components/common/PageHeader'
 import { useAuth } from '../../contexts/authHooks'
@@ -22,6 +23,7 @@ type SectionId =
   | 'languages'
   | 'appearance'
   | 'audit-logs'
+  | 'payroll'
 
 interface SectionMeta {
   id: SectionId
@@ -69,6 +71,7 @@ const SECTIONS: SectionMeta[] = [
   { id: 'languages', label: 'Languages', eyebrow: 'LOCALIZATION', title: 'Languages', description: 'Manage the languages available in the workspace.' },
   { id: 'appearance', label: 'Appearance', eyebrow: 'APPEARANCE', title: 'Appearance', description: 'Customize how the workspace looks.' },
   { id: 'audit-logs', label: 'Audit Logs', eyebrow: 'COMPLIANCE', title: 'Audit logs', description: 'Review who changed what, and when.' },
+  { id: 'payroll', label: 'Payroll', eyebrow: 'PAYROLL', title: 'Payroll', description: 'Manage payroll runs, salary structures, components, legal parameters and client configuration.' },
 ]
 
 const LLM_PROVIDERS = [
@@ -971,6 +974,21 @@ export function SettingsPage() {
             </>
           )}
 
+          {activeId === 'payroll' && (
+            <>
+              <p className="setting-hint">
+                Payroll lives in its own pages — the settings below are the same pages the HR sidebar links to.
+              </p>
+              <div style={{ display: 'grid', gap: '0.5rem', maxWidth: '22rem' }}>
+                <Link className="button secondary" to="/app/payroll">Payroll runs</Link>
+                <Link className="button secondary" to="/app/payroll/client-config">Client configuration</Link>
+                <Link className="button secondary" to="/app/payroll/salary-structures">Salary structures</Link>
+                <Link className="button secondary" to="/app/payroll/components">Components</Link>
+                <Link className="button secondary" to="/app/payroll/parameters">Legal parameters (read-only)</Link>
+              </div>
+            </>
+          )}
+
           {activeId !== 'profile' &&
             activeId !== 'security' &&
             activeId !== 'assistant' &&
@@ -978,7 +996,8 @@ export function SettingsPage() {
             activeId !== 'roles' &&
             activeId !== 'leave-types' &&
             activeId !== 'leave-policies' &&
-            activeId !== 'audit-logs' && (
+            activeId !== 'audit-logs' &&
+            activeId !== 'payroll' && (
               <div className="setting-empty">
                 <strong>Nothing to configure here yet</strong>
                 <span>Settings for {section.label.toLowerCase()} will appear in this panel.</span>
