@@ -1,0 +1,360 @@
+/* Payroll pages (P3). Uses the app's theme variables so the pages work
+   in both light and dark mode. Global classes (.page, .panel,
+   .page-header, .button, .status-badge, table) come from App.css. */
+
+.payroll-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.payroll-banner strong {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.payroll-banner.danger {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.payroll-banner.info {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.payroll-error {
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.payroll-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.payroll-totals > div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.payroll-totals span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.payroll-totals strong {
+  display: block;
+  color: var(--text);
+  font-size: 20px;
+  margin-top: 6px;
+}
+
+.payroll-totals small {
+  display: block;
+  color: var(--muted-2);
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.payroll-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payroll-table th,
+.payroll-table td {
+  text-align: start;
+  padding: 11px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.payroll-table th {
+  color: var(--muted-2);
+  background: var(--surface-raised);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 600;
+  border-top: 0;
+}
+
+.payroll-table td:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.payroll-table td {
+  color: var(--muted);
+}
+
+.payroll-table td.num,
+.payroll-table th.num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.payroll-table tbody tr {
+  cursor: pointer;
+}
+
+.payroll-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.payroll-table tr.expanded-row td {
+  background: var(--surface-raised);
+  white-space: normal;
+}
+
+.payroll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payroll-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.payroll-form-grid label,
+.payroll-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.payroll-form-grid label input,
+.payroll-form-grid label select,
+.payroll-form label input,
+.payroll-form label select,
+.payroll-form label textarea {
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: 12px;
+  outline: 0;
+}
+
+.payroll-form label textarea {
+  height: auto;
+  min-height: 70px;
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.payroll-form-actions {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.payroll-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payroll-check {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.payroll-check.blocking {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.07);
+}
+
+.payroll-check.warning {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.payroll-check code {
+  color: var(--text);
+  font-size: 10px;
+  background: var(--surface-raised);
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.payroll-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+}
+
+.payroll-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.payroll-section-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.payroll-detail {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+.payroll-detail h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--muted-2);
+}
+
+.payroll-detail dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 12px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.payroll-detail dt {
+  color: var(--muted);
+}
+
+.payroll-detail dd {
+  margin: 0;
+  color: var(--text);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.payroll-empty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 22px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.payroll-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.payroll-tabs button {
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 13px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payroll-tabs button.active {
+  color: var(--blue);
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Run statuses the global .status-badge does not style yet. */
+.status-badge.draft {
+  color: var(--muted);
+  background: var(--surface-raised);
+}
+
+.status-badge.calculated {
+  color: var(--blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.status-badge.closed {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.confidence-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.confidence-pill.official,
+.confidence-pill.confirmed {
+  color: var(--mint);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.confidence-pill.secondary,
+.confidence-pill.corroborated {
+  color: var(--orange);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.confidence-pill.unknown {
+  color: var(--muted);
+  background: var(--surface-raised);
+}
+
+@media (max-width: 900px) {
+  .payroll-totals {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .payroll-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payroll-detail {
+    grid-template-columns: 1fr;
+  }
+}
