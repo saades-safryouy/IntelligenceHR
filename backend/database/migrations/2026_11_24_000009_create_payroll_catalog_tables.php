@@ -21,6 +21,22 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Recovery from the partial live state (24 Nov 2026): the first
+        // deploy failed on the over-long unique index name on
+        // payroll_legal_parameters AFTER creating some of these tables,
+        // and MySQL DDL is not transactional, so the tables were left
+        // behind while this migration was never recorded. Drop them
+        // first so this migration succeeds both on the partial live DB
+        // and on a fresh DB. These tables are empty (the seeder never
+        // ran, no app code writes to them yet) and belong only to this
+        // migration — nothing else is dropped. Children first, so the
+        // foreign keys on payroll_structure_lines do not block the drop.
+        Schema::dropIfExists('payroll_structure_lines');
+        Schema::dropIfExists('payroll_salary_structures');
+        Schema::dropIfExists('payroll_salary_components');
+        Schema::dropIfExists('payroll_legal_parameters');
+        Schema::dropIfExists('tenant_jurisdictions');
+
         Schema::create('tenant_jurisdictions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained('tenants');
@@ -49,7 +65,11 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->uuid('created_by')->nullable()->index();
             $table->timestamps();
-            $table->unique(['jurisdiction_code', 'profile_version', 'key', 'valid_from']);
+            // Explicit short name: the Laravel default
+            // (payroll_legal_parameters_jurisdiction_code_profile_version_key_valid_from_unique,
+            // 80 chars) exceeds MySQL's 64-character identifier limit
+            // and crashed the first deploy (error 1059). New name is 46 chars.
+            $table->unique(['jurisdiction_code', 'profile_version', 'key', 'valid_from'], 'plp_jurisdiction_profile_key_valid_from_unique');
         });
 
         Schema::create('payroll_salary_components', function (Blueprint $table) {

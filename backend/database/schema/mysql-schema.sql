@@ -10,6 +10,10 @@
 -- disagree, the migration wins and this file must be regenerated.
 -- Regenerate it (from the migrations, or via schema:dump when a live DB
 -- is reachable) whenever migrations change.
+-- 24 Nov 2026 fix: the unique index on payroll_legal_parameters was
+-- renamed to `plp_jurisdiction_profile_key_valid_from_unique` (46 chars)
+-- because the Laravel default (80 chars) exceeds MySQL's 64-char limit
+-- and crashed the first deploy (error 1059).
 --
 -- State: final state after migrations 0001_01_01_000000 through
 -- 2026_11_24_000010 (Payroll P1: tenancy foundation + core skeleton).
@@ -592,7 +596,7 @@ CREATE TABLE `payroll_legal_parameters` (
   `created_at` TIMESTAMP NULL,
   `updated_at` TIMESTAMP NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `payroll_legal_parameters_jurisdiction_code_profile_version_key_valid_from_unique` (`jurisdiction_code`, `profile_version`, `key`, `valid_from`),
+  UNIQUE KEY `plp_jurisdiction_profile_key_valid_from_unique` (`jurisdiction_code`, `profile_version`, `key`, `valid_from`),
   INDEX `payroll_legal_parameters_jurisdiction_code_index` (`jurisdiction_code`),
   INDEX `payroll_legal_parameters_key_index` (`key`),
   INDEX `payroll_legal_parameters_created_by_index` (`created_by`)
