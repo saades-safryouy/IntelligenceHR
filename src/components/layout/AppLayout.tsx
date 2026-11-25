@@ -48,6 +48,7 @@ export function AppLayout({
   const navText: Record<string, string> = {
     dashboard: translations[language].dashboard,
     people: translations[language].people,
+    departments: translations[language].departments,
     organigramme: 'Organization',
     onboarding: translations[language].onboarding,
     offboarding: translations[language].offboarding,
@@ -55,6 +56,10 @@ export function AppLayout({
     holidays: translations[language].holidays,
     documents: translations[language].documents,
     calendar: translations[language].calendar,
+    training: translations[language].training,
+    attendance: translations[language].attendance,
+    performance: translations[language].performance,
+    recruitment: translations[language].recruitment,
     reports: translations[language].reports,
     workflows: translations[language].workflows,
     settings: translations[language].settings,
@@ -88,11 +93,11 @@ export function AppLayout({
             <NavLink
               key={to}
               to={to}
-              title={collapsed ? navText[label] : undefined}
+              title={collapsed ? navText[label] ?? label : undefined}
               onClick={() => setMobileOpen(false)}
             >
               <Icon size={18} />
-              <span>{navText[label]}</span>
+              <span>{navText[label] ?? label}</span>
               {badge && <em>{badge}</em>}
             </NavLink>
           ))}
@@ -174,7 +179,7 @@ export function AppLayout({
 
           <GlobalSearch
             placeholder={translations[language].search}
-            modules={navItems.filter(({ permissions }) => !permissions || permissions.some(hasPermission)).map(({ to, label }) => ({ label: navText[label], to }))}
+            modules={navItems.filter(({ permissions }) => !permissions || permissions.some(hasPermission)).map(({ to, label }) => ({ label: navText[label] ?? label, to }))}
             employeeTo="/app/employees"
             onNavigate={navigate}
           />
