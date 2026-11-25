@@ -12,6 +12,9 @@ final class ParameterSet
 {
     /**
      * @param array<string, float|int|string> $values key => value
+     * @param array<string, string> $confidences key => confidence label
+     *   ('secondary' | 'corroborated' | 'confirmed' | 'official').
+     *   Keys without an entry count as unvalidated.
      */
     public function __construct(
         public readonly string $jurisdictionCode,
@@ -19,6 +22,7 @@ final class ParameterSet
         public readonly ?int $id = null,
         public readonly ?string $validFrom = null,
         private readonly array $values = [],
+        private readonly array $confidences = [],
     ) {}
 
     public function has(string $key): bool
@@ -52,5 +56,45 @@ final class ParameterSet
     public function all(): array
     {
         return $this->values;
+    }
+
+    /** Confidence label of a key, or null when the set carries none. */
+    public function confidence(string $key): ?string
+    {
+        return $this->confidences[$key] ?? null;
+    }
+
+    /**
+     * Whether a parameter counts as validated for closing a run (BRD
+     * §12.3 step 3b — the close-block hook, used by P3). 'official'
+     * is the label the close-block uses; 'confirmed' (BRD §7.4's
+     * wording for the same thing) counts too. Anything else —
+     * including 'secondary' and a missing label — is unvalidated.
+     */
+    public function isValidated(string $key): bool
+    {
+        return in_array($this->confidence($key), ['official', 'confirmed'], true);
+    }
+
+    /**
+     * Keys whose confidence is not validated. With $keys given, only
+     * those are checked (e.g. the keys a calculation actually used —
+     * MoroccoPayrollAdapter::usedParameterKeys()); without, every key
+     * in the set. A key missing from the set counts as unvalidated.
+     *
+     * @param array<int, string>|null $keys
+     * @return array<int, string>
+     */
+    public function unvalidatedKeys(?array $keys = null): array
+    {
+        $keys ??= array_keys($this->values);
+        $unvalidated = [];
+        foreach ($keys as $key) {
+            if (! $this->isValidated($key)) {
+                $unvalidated[] = $key;
+            }
+        }
+
+        return $unvalidated;
     }
 }
