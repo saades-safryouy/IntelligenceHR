@@ -370,5 +370,11 @@ class DatabaseSeeder extends Seeder
                 ['body' => 'Your HR workspace is ready.', 'resource_type' => null, 'resource_id' => null]
             );
         }
+
+        // --- Payroll — Morocco profile (P2, BRD §13) ---
+        // Parameter seed (all confidence = secondary, none of V-01…V-15
+        // validated yet) + the MA enablement row for the Demo Company
+        // tenant (status disabled — D-16, platform admin enables it).
+        $this->call(MoroccoPayrollParametersSeeder::class);
     }
 }
