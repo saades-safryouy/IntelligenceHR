@@ -561,11 +561,23 @@ final class PayrollRunService
 
         // Profile-level checks (jurisdiction enablement).
         foreach ($adapter->validationChecks(['jurisdiction_status' => $jurisdictionStatus]) as $check) {
-            ($check['blocking'] ?? false ? $blocking : $warnings)[] = [
+            // NOTE: do NOT append via a ternary
+            // `($check['blocking'] ? $blocking : $warnings)[] = ...` —
+            // PHP forbids assigning to a ternary result ("Cannot use
+            // temporary expression in write context", fatal at load
+            // time). That one-liner broke the whole service file, which
+            // 500'd every run/client-config endpoint (both controllers
+            // inject this service). Append explicitly instead.
+            $entry = [
                 'code' => $check['code'],
                 'message' => $check['message'],
                 'blocking' => (bool) ($check['blocking'] ?? false),
             ];
+            if ($check['blocking'] ?? false) {
+                $blocking[] = $entry;
+            } else {
+                $warnings[] = $entry;
+            }
         }
 
         foreach ($employees as $employee) {
@@ -630,13 +642,18 @@ final class PayrollRunService
             // Profile checks: mandatory employee data (CNSS number,
             // hiring date) — from the snapshot's employee block.
             foreach ($adapter->validationChecks(['employee' => $snapshot['employee'] ?? []]) as $check) {
-                ($check['blocking'] ?? false ? $blocking : $warnings)[] = [
+                $entry = [
                     'code' => $check['code'],
                     'message' => "{$name}: {$check['message']}",
                     'blocking' => (bool) ($check['blocking'] ?? false),
                     'employee_id' => $employee->id,
                     'employee_name' => $name,
                 ];
+                if ($check['blocking'] ?? false) {
+                    $blocking[] = $entry;
+                } else {
+                    $warnings[] = $entry;
+                }
             }
 
             // FR-16 warnings recorded by the calculation.

@@ -3,6 +3,7 @@
 namespace Tests\Unit\Payroll;
 
 use App\Services\Payroll\ParameterSet;
+use App\Services\Payroll\PayrollParameterLoader;
 use App\Services\Payroll\PayrollRunService;
 use PHPUnit\Framework\TestCase;
 
@@ -255,5 +256,25 @@ final class PayrollRunServiceTest extends TestCase
             ['gross' => 0.0, 'cnss_employee' => 0.0, 'ir' => 0.0],
             PayrollRunService::accumulateYtd([])
         );
+    }
+
+    // --- Regression: service must load (25 Nov 2026 fix) -------------
+
+    public function test_service_instantiates_with_a_real_loader(): void
+    {
+        // Regression test for the P3 500s (25 Nov 2026): validationResults()
+        // appended check entries with
+        // `($check['blocking'] ? $blocking : $warnings)[] = ...`, which
+        // PHP rejects at parse time ("Cannot use temporary expression in
+        // write context"). The whole service file then failed to load, so
+        // Laravel's container could not instantiate it — and every route
+        // handled by the two controllers that inject it (PayrollRunController,
+        // PayrollClientConfigController) returned HTTP 500, while the
+        // parameters/components/structures endpoints (no service injection)
+        // kept working. Instantiating the service here proves the class
+        // loads; the static tests above already prove its rules.
+        $service = new PayrollRunService(new PayrollParameterLoader);
+
+        $this->assertInstanceOf(PayrollRunService::class, $service);
     }
 }
