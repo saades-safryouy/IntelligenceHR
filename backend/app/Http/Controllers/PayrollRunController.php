@@ -129,8 +129,13 @@ final class PayrollRunController extends Controller
         return response()->json(['data' => $this->runPayload($run, true)]);
     }
 
+    // NOTE: this action must NOT be named validate() — the base Controller
+    // (ValidatesRequests trait) already defines validate(Request, array
+    // $rules, ...). A child validate(Request, PayrollRun) is a fatal
+    // signature incompatibility at class load (25 Nov 2026: it 500'd every
+    // route on this controller). The route URI stays .../validate.
     /** POST /payroll/runs/{run}/validate — run FR-22 + profile checks. */
-    public function validate(Request $request, PayrollRun $run)
+    public function validateRun(Request $request, PayrollRun $run)
     {
         if (! $this->can('payroll.run.validate')) {
             return $this->forbidden();

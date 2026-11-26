@@ -10,7 +10,12 @@ export function ParametersPage() {
   const { text: t } = useI18n()
   const [at, setAt] = useState(new Date().toISOString().slice(0, 10))
   const [parameters, setParameters] = useState<LegalParameter[]>([])
-  const [unvalidatedCount, setUnvalidatedCount] = useState(0)
+  // null until the first load resolves: the banner below must never
+  // claim "All parameters validated" while the data is still loading
+  // (the initial 0 did exactly that — a false "validated" flash on
+  // every page load, and a stuck "validated" banner when the load
+  // itself failed, since the count stayed 0).
+  const [unvalidatedCount, setUnvalidatedCount] = useState<number | null>(null)
   const [profileVersion, setProfileVersion] = useState('')
   const [jurisdictions, setJurisdictions] = useState<JurisdictionRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -47,25 +52,27 @@ export function ParametersPage() {
         subtitle={t('The Moroccan rates and rules the payroll engine reads. Read-only — a correction creates a new parameter version, it never edits a row in place.')}
       />
 
-      {unvalidatedCount > 0 ? (
-        <div className="payroll-banner danger">
-          <div>
-            <strong>
-              {t('Unvalidated parameters — awaiting accountant validation')} ({unvalidatedCount}/{parameters.length})
-            </strong>
-            {t(
-              'None of the validation items V-01…V-15 are confirmed yet. Runs can be calculated and approved, but they cannot close while their calculation used unvalidated parameters.',
-            )}
+      {!isLoading && unvalidatedCount !== null ? (
+        unvalidatedCount > 0 ? (
+          <div className="payroll-banner danger">
+            <div>
+              <strong>
+                {t('Unvalidated parameters — awaiting accountant validation')} ({unvalidatedCount}/{parameters.length})
+              </strong>
+              {t(
+                'None of the validation items V-01…V-15 are confirmed yet. Runs can be calculated and approved, but they cannot close while their calculation used unvalidated parameters.',
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="payroll-banner info">
-          <div>
-            <strong>{t('All parameters validated.')}</strong>
-            {t('Every parameter in this set is official or confirmed. Runs may close.')}
+        ) : (
+          <div className="payroll-banner info">
+            <div>
+              <strong>{t('All parameters validated.')}</strong>
+              {t('Every parameter in this set is official or confirmed. Runs may close.')}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      ) : null}
 
       {maJurisdiction ? (
         <div className="panel">

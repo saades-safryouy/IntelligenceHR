@@ -201,7 +201,7 @@ Route::prefix('v1')->group(function () {
         Route::post('payroll/runs', [PayrollRunController::class, 'store']);
         Route::get('payroll/runs/{run}', [PayrollRunController::class, 'show']);
         Route::post('payroll/runs/{run}/calculate', [PayrollRunController::class, 'calculate']);
-        Route::post('payroll/runs/{run}/validate', [PayrollRunController::class, 'validate']);
+        Route::post('payroll/runs/{run}/validate', [PayrollRunController::class, 'validateRun']);
         Route::post('payroll/runs/{run}/approve', [PayrollRunController::class, 'approve']);
         Route::post('payroll/runs/{run}/close', [PayrollRunController::class, 'close']);
         Route::post('payroll/runs/{run}/send-back', [PayrollRunController::class, 'sendBack']);
