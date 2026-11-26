@@ -382,5 +382,13 @@ class DatabaseSeeder extends Seeder
         // employee, demo CNSS numbers/dependants, default client
         // config v1. Idempotent — never overwrites HR edits.
         $this->call(PayrollDemoSeeder::class);
+
+        // --- Demo employees (50 total) ---
+        // 44 extra data-only employees (no User accounts, no payroll
+        // data) so the dashboard, directory and Reports charts test
+        // against a realistic headcount. Idempotent (firstOrCreate on
+        // email); runs after the payroll seeders — PayrollDemoSeeder
+        // only touches ids 1043–1048 by hardcoded id list.
+        $this->call(DemoEmployeesSeeder::class);
     }
 }
