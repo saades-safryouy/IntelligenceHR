@@ -31,6 +31,29 @@ final class PayrollRunController extends Controller
         private readonly PayrollRunService $runs,
     ) {}
 
+    /**
+     * Resolve a run id to the model AFTER the tenant middleware has run.
+     *
+     * NOTE — do NOT use implicit route-model binding in this controller.
+     * SubstituteBindings (in the api group) runs BEFORE auth:sanctum +
+     * the tenant middleware, so at binding time the tenant is not bound
+     * yet, TenantContext::mode() is 'none', and the tenant scope fails
+     * closed (whereRaw '1 = 0') — every bound run/payslip 404s with
+     * "No query results for model" even though the row exists and the
+     * list returns it (26 Nov 2026). Resolving here, inside the method,
+     * runs after the tenant is bound, so the scope matches the current
+     * tenant; a foreign tenant's run still 404s (BRD §2.4: 404, never 403).
+     */
+    private function findRun(int $runId): PayrollRun
+    {
+        return PayrollRun::findOrFail($runId);
+    }
+
+    private function findPayslip(int $payslipId): PayrollPayslip
+    {
+        return PayrollPayslip::findOrFail($payslipId);
+    }
+
     /** GET /payroll/runs — paged list (envelope B). */
     public function index(Request $request)
     {
@@ -83,8 +106,10 @@ final class PayrollRunController extends Controller
     }
 
     /** GET /payroll/runs/{run} — run + totals + validation results + exceptions. */
-    public function show(PayrollRun $run)
+    public function show(int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.view')) {
             return $this->forbidden();
         }
@@ -100,8 +125,10 @@ final class PayrollRunController extends Controller
     }
 
     /** POST /payroll/runs/{run}/calculate — (re-)calculate the draft. */
-    public function calculate(Request $request, PayrollRun $run)
+    public function calculate(Request $request, int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.calculate')) {
             return $this->forbidden();
         }
@@ -135,8 +162,10 @@ final class PayrollRunController extends Controller
     // signature incompatibility at class load (25 Nov 2026: it 500'd every
     // route on this controller). The route URI stays .../validate.
     /** POST /payroll/runs/{run}/validate — run FR-22 + profile checks. */
-    public function validateRun(Request $request, PayrollRun $run)
+    public function validateRun(Request $request, int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.validate')) {
             return $this->forbidden();
         }
@@ -153,8 +182,10 @@ final class PayrollRunController extends Controller
     }
 
     /** POST /payroll/runs/{run}/approve — D-01 enforced in the service. */
-    public function approve(PayrollRun $run)
+    public function approve(int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.approve')) {
             return $this->forbidden();
         }
@@ -166,8 +197,10 @@ final class PayrollRunController extends Controller
     }
 
     /** POST /payroll/runs/{run}/close — close-block (§12.3 step 3b) enforced in the service. */
-    public function close(PayrollRun $run)
+    public function close(int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.close')) {
             return $this->forbidden();
         }
@@ -179,8 +212,10 @@ final class PayrollRunController extends Controller
     }
 
     /** POST /payroll/runs/{run}/send-back — any non-closed state → draft, with reason. */
-    public function sendBack(Request $request, PayrollRun $run)
+    public function sendBack(Request $request, int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.run.send_back')) {
             return $this->forbidden();
         }
@@ -193,8 +228,10 @@ final class PayrollRunController extends Controller
     }
 
     /** GET /payroll/runs/{run}/payslips — paged payslips of a run (envelope B). */
-    public function payslips(Request $request, PayrollRun $run)
+    public function payslips(Request $request, int $run)
     {
+        $run = $this->findRun($run);
+
         if (! $this->can('payroll.payslip.view.all')) {
             return $this->forbidden();
         }
@@ -214,8 +251,10 @@ final class PayrollRunController extends Controller
     }
 
     /** GET /payroll/payslips/{payslip} — one payslip with its calculation snapshot. */
-    public function showPayslip(PayrollPayslip $payslip)
+    public function showPayslip(int $payslip)
     {
+        $payslip = $this->findPayslip($payslip);
+
         if (! $this->can('payroll.payslip.view.all')) {
             return $this->forbidden();
         }
