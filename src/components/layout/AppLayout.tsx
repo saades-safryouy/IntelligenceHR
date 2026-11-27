@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -12,7 +12,7 @@ import {
   Sun,
   X,
 } from 'lucide-react'
-import { navItems, futureModules } from '../../data/navigation'
+import { navItems, navSections, futureModules } from '../../data/navigation'
 import { useI18n, translations } from '../../contexts/I18nContext'
 import type { Language, Theme } from '../../contexts/I18nContext'
 import { useAuth } from '../../contexts/authHooks'
@@ -90,18 +90,29 @@ export function AppLayout({
         <div className="workspace-label">{text('WORKSPACE')}</div>
 
         <nav>
-          {navItems.filter(({ permissions }) => !permissions || permissions.some(hasPermission)).map(({ to, label, icon: Icon, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={collapsed ? navText[label] ?? label : undefined}
-              onClick={() => setMobileOpen(false)}
-            >
-              <Icon size={18} />
-              <span>{navText[label] ?? label}</span>
-              {badge && <em>{badge}</em>}
-            </NavLink>
-          ))}
+          {navSections.map(({ id, headerKey }) => {
+            const items = navItems.filter(
+              (item) => item.section === id && (!item.permissions || item.permissions.some(hasPermission)),
+            )
+            if (items.length === 0) return null
+            return (
+              <Fragment key={id}>
+                {id !== 'overview' ? <div className="workspace-label">{text(headerKey)}</div> : null}
+                {items.map(({ to, label, icon: Icon, badge }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    title={collapsed ? navText[label] ?? label : undefined}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon size={18} />
+                    <span>{navText[label] ?? label}</span>
+                    {badge && <em>{badge}</em>}
+                  </NavLink>
+                ))}
+              </Fragment>
+            )
+          })}
         </nav>
 
         {futureModules.length > 0 ? (

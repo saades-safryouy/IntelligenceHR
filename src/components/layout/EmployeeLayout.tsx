@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/authHooks'
 import type { Language, Theme } from '../../contexts/I18nContext'
+import { useI18n } from '../../contexts/I18nContext'
 import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
 import { EmployeeNotificationPanel } from '../notifications/EmployeeNotificationPanel'
@@ -56,6 +57,7 @@ export function EmployeeLayout({
   const { currentUser } = useAuth()
   const navigate = useNavigate()
   const t = employeeDashboardTranslations[language]
+  const { text } = useI18n()
   const employee = resolveEmployee(currentUser)
   const unread = isApiDataMode ? apiUnread ?? 0 : employee ? getUnreadCount(employee.userId) : 0
 
@@ -68,19 +70,29 @@ export function EmployeeLayout({
     return () => { active = false }
   }, [])
 
+  // Sidebar sections, in display order. The first section ('overview') renders
+  // no header: the employee-portal label above the nav already labels it.
+  const navSections = [
+    { id: 'overview', headerKey: 'NAV_SECTION_OVERVIEW' },
+    { id: 'timeLeave', headerKey: 'NAV_SECTION_TIME_LEAVE' },
+    { id: 'lifecycle', headerKey: 'NAV_SECTION_LIFECYCLE' },
+    { id: 'workspace', headerKey: 'NAV_SECTION_WORKSPACE' },
+    { id: 'payroll', headerKey: 'NAV_SECTION_PAYROLL' },
+  ] as const
+
   const navItems = [
-    { label: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard },
-    { label: 'My Profile', path: '/employee/profile', icon: User },
-    { label: 'Leave', path: '/employee/leave', icon: CalendarDays },
-    { label: 'Holidays', path: '/employee/holidays', icon: CalendarDays },
-    { label: 'Onboarding', path: '/employee/onboarding', icon: ClipboardCheck },
-    { label: 'Offboarding', path: '/employee/offboarding', icon: User },
-    { label: 'Notifications', path: '/employee/notifications', icon: Bell },
-    { label: 'Organization', path: '/employee/organigram', icon: Network },
-    { label: 'Workflows', path: '/employee/workflows', icon: Workflow },
-    { label: 'Documents', path: '/employee/documents', icon: FolderOpen },
-    { label: 'My Payslips', path: '/employee/payslips', icon: WalletCards },
-  ]
+    { label: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, section: 'overview' },
+    { label: 'My Profile', path: '/employee/profile', icon: User, section: 'overview' },
+    { label: 'Leave', path: '/employee/leave', icon: CalendarDays, section: 'timeLeave' },
+    { label: 'Holidays', path: '/employee/holidays', icon: CalendarDays, section: 'timeLeave' },
+    { label: 'Onboarding', path: '/employee/onboarding', icon: ClipboardCheck, section: 'lifecycle' },
+    { label: 'Offboarding', path: '/employee/offboarding', icon: User, section: 'lifecycle' },
+    { label: 'Notifications', path: '/employee/notifications', icon: Bell, section: 'workspace' },
+    { label: 'Organization', path: '/employee/organigram', icon: Network, section: 'workspace' },
+    { label: 'Workflows', path: '/employee/workflows', icon: Workflow, section: 'workspace' },
+    { label: 'Documents', path: '/employee/documents', icon: FolderOpen, section: 'workspace' },
+    { label: 'My Payslips', path: '/employee/payslips', icon: WalletCards, section: 'payroll' },
+  ] as const
 
   const handleLogout = () => {
     onLogout()
@@ -104,17 +116,26 @@ export function EmployeeLayout({
         <div className="workspace-label">{t.employeePortal}</div>
 
         <nav>
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              title={collapsed ? item.label : undefined}
-              onClick={() => setMobileOpen(false)}
-            >
-              <item.icon size={18} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          {navSections.map(({ id, headerKey }) => {
+            const items = navItems.filter((item) => item.section === id)
+            if (items.length === 0) return null
+            return (
+              <Fragment key={id}>
+                {id !== 'overview' ? <div className="workspace-label">{text(headerKey)}</div> : null}
+                {items.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    title={collapsed ? item.label : undefined}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </Fragment>
+            )
+          })}
         </nav>
 
         <div className="sidebar-bottom">

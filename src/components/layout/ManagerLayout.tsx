@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/authHooks'
 import type { Language, Theme } from '../../contexts/I18nContext'
+import { useI18n } from '../../contexts/I18nContext'
 import { isApiDataMode, apiRequest } from '../../lib/apiClient'
 import { Brand } from './Brand'
 import { LanguageSwitch } from './LanguageSwitch'
@@ -53,6 +54,7 @@ export function ManagerLayout({
   const { currentUser, hasPermission } = useAuth()
   const navigate = useNavigate()
   const copy = managerTranslations[language]
+  const { text } = useI18n()
   const canViewTeam = hasPermission('people.employee.view.all') || hasPermission('people.employee.view.department')
   const canViewNotifications = hasPermission('notification.view')
   const canApprove = hasPermission('workflow.approve')
@@ -70,16 +72,36 @@ export function ManagerLayout({
     return () => { active = false }
   }, [canViewNotifications])
 
-  const navigation = [
-    { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ...(canViewTeam ? [{ to: '/manager/analytics', label: 'Reports', icon: BarChart3 }] : []),
-    ...(canViewTeam ? [{ to: '/manager/team', label: 'People', icon: Network }] : []),
-    ...(canViewTeam ? [{ to: '/manager/leave', label: 'Leave', icon: CalendarDays }] : []),
-    { to: '/manager/holidays', label: 'Holidays', icon: Sun },
-    ...(canViewTeam ? [{ to: '/manager/onboarding', label: 'Onboarding', icon: UserPlus }] : []),
-    ...(canViewTeam ? [{ to: '/manager/offboarding', label: 'Offboarding', icon: UserMinus }] : []),
-    ...(canApprove ? [{ to: '/manager/approvals', label: 'Approvals', icon: ClipboardCheck }] : []),
-    ...(canViewWorkflows ? [{ to: '/manager/workflows', label: 'Workflows', icon: GitBranch }] : []),
+  // Sidebar sections, in display order. The first section ('overview') renders
+  // no header: the manager-portal label above the nav already labels it.
+  // Sections with no visible link (permission-gated) render nothing.
+  const navSections = [
+    { id: 'overview', headerKey: 'NAV_SECTION_OVERVIEW' },
+    { id: 'team', headerKey: 'NAV_SECTION_TEAM' },
+    { id: 'timeLeave', headerKey: 'NAV_SECTION_TIME_LEAVE' },
+    { id: 'lifecycle', headerKey: 'NAV_SECTION_LIFECYCLE' },
+    { id: 'approvals', headerKey: 'NAV_SECTION_APPROVALS' },
+    { id: 'notifications', headerKey: 'NAV_SECTION_NOTIFICATIONS' },
+  ] as const
+
+  type ManagerNavSection = (typeof navSections)[number]['id']
+
+  const navigation: Array<{
+    to: string
+    label: string
+    icon: typeof LayoutDashboard
+    badge?: number
+    section: ManagerNavSection
+  }> = [
+    { to: '/manager/dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'overview' },
+    ...(canViewTeam ? [{ to: '/manager/analytics', label: 'Reports', icon: BarChart3, section: 'team' as const }] : []),
+    ...(canViewTeam ? [{ to: '/manager/team', label: 'People', icon: Network, section: 'team' as const }] : []),
+    ...(canViewTeam ? [{ to: '/manager/leave', label: 'Leave', icon: CalendarDays, section: 'timeLeave' as const }] : []),
+    { to: '/manager/holidays', label: 'Holidays', icon: Sun, section: 'timeLeave' },
+    ...(canViewTeam ? [{ to: '/manager/onboarding', label: 'Onboarding', icon: UserPlus, section: 'lifecycle' as const }] : []),
+    ...(canViewTeam ? [{ to: '/manager/offboarding', label: 'Offboarding', icon: UserMinus, section: 'lifecycle' as const }] : []),
+    ...(canApprove ? [{ to: '/manager/approvals', label: 'Approvals', icon: ClipboardCheck, section: 'approvals' as const }] : []),
+    ...(canViewWorkflows ? [{ to: '/manager/workflows', label: 'Workflows', icon: GitBranch, section: 'approvals' as const }] : []),
     ...(canViewNotifications
       ? [
           {
@@ -87,6 +109,7 @@ export function ManagerLayout({
             label: 'Notifications',
             icon: Bell,
             badge: unread > 0 ? unread : undefined,
+            section: 'notifications' as const,
           },
         ]
       : []),
@@ -103,13 +126,22 @@ export function ManagerLayout({
         </div>
         <div className="workspace-label">{copy.portal}</div>
         <nav>
-          {navigation.map(({ to, label, icon: Icon, badge }) => (
-            <NavLink key={to} to={to} title={collapsed ? label : undefined} onClick={() => setMobileOpen(false)}>
-              <Icon size={18} />
-              <span>{label}</span>
-              {badge !== undefined && <span className="nav-badge">{badge}</span>}
-            </NavLink>
-          ))}
+          {navSections.map(({ id, headerKey }) => {
+            const items = navigation.filter((item) => item.section === id)
+            if (items.length === 0) return null
+            return (
+              <Fragment key={id}>
+                {id !== 'overview' ? <div className="workspace-label">{text(headerKey)}</div> : null}
+                {items.map(({ to, label, icon: Icon, badge }) => (
+                  <NavLink key={to} to={to} title={collapsed ? label : undefined} onClick={() => setMobileOpen(false)}>
+                    <Icon size={18} />
+                    <span>{label}</span>
+                    {badge !== undefined && <span className="nav-badge">{badge}</span>}
+                  </NavLink>
+                ))}
+              </Fragment>
+            )
+          })}
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-help"><CircleHelp size={18} /><span>{copy.help}</span></div>
