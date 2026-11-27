@@ -8,6 +8,25 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
+
+    /**
+     * Resolve a department id to the model AFTER the tenant middleware has run.
+     *
+     * NOTE — do NOT use implicit route-model binding in this controller.
+     * SubstituteBindings (in the api group) runs BEFORE auth:sanctum +
+     * the tenant middleware, so at binding time the tenant is not bound
+     * yet, TenantContext::mode() is 'none', and the tenant scope fails
+     * closed (whereRaw '1 = 0') — every bound department 404s with
+     * "No query results for model" even though the row exists and the
+     * list returns it (26 Nov 2026). Resolving here, inside the method,
+     * runs after the tenant is bound, so the scope matches the current
+     * tenant; a foreign tenant's department still 404s (BRD §2.4: 404, never 403).
+     */
+    private function findDepartment(string $departmentId): Department
+    {
+        return Department::findOrFail($departmentId);
+    }
+
     public function index()
     {
         $departments = Department::with(['manager', 'employees'])->orderBy('name')->get();
@@ -39,8 +58,10 @@ class DepartmentController extends Controller
         return response()->json(['data' => ApiPresenter::department($department)], 201);
     }
 
-    public function update(Request $request, Department $department)
+    public function update(Request $request, string $department)
     {
+        $department = $this->findDepartment($department);
+
         if (! $this->can('people.employee.update')) {
             return $this->forbidden();
         }
@@ -61,8 +82,10 @@ class DepartmentController extends Controller
         return response()->json(['data' => ApiPresenter::department($department)]);
     }
 
-    public function destroy(Department $department)
+    public function destroy(string $department)
     {
+        $department = $this->findDepartment($department);
+
         if (! $this->can('people.employee.update')) {
             return $this->forbidden();
         }

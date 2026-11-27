@@ -17,6 +17,25 @@ use Illuminate\Validation\Rule;
  */
 final class PayrollComponentController extends Controller
 {
+
+    /**
+     * Resolve a component id to the model AFTER the tenant middleware has run.
+     *
+     * NOTE — do NOT use implicit route-model binding in this controller.
+     * SubstituteBindings (in the api group) runs BEFORE auth:sanctum +
+     * the tenant middleware, so at binding time the tenant is not bound
+     * yet, TenantContext::mode() is 'none', and the tenant scope fails
+     * closed (whereRaw '1 = 0') — every bound component 404s with
+     * "No query results for model" even though the row exists and the
+     * list returns it (26 Nov 2026). Resolving here, inside the method,
+     * runs after the tenant is bound, so the scope matches the current
+     * tenant; a foreign tenant's component still 404s (BRD §2.4: 404, never 403).
+     */
+    private function findComponent(int $componentId): PayrollSalaryComponent
+    {
+        return PayrollSalaryComponent::findOrFail($componentId);
+    }
+
     /** GET /payroll/components — the tenant's catalog (envelope E). */
     public function index()
     {
@@ -54,8 +73,10 @@ final class PayrollComponentController extends Controller
     }
 
     /** PATCH /payroll/components/{component} — edit a catalog entry. */
-    public function update(Request $request, PayrollSalaryComponent $component)
+    public function update(Request $request, int $component)
     {
+        $component = $this->findComponent($component);
+
         if (! $this->can('payroll.component.manage')) {
             return $this->forbidden();
         }

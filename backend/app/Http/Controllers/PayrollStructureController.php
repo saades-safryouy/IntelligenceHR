@@ -19,6 +19,25 @@ use Illuminate\Validation\ValidationException;
  */
 final class PayrollStructureController extends Controller
 {
+
+    /**
+     * Resolve a structure id to the model AFTER the tenant middleware has run.
+     *
+     * NOTE — do NOT use implicit route-model binding in this controller.
+     * SubstituteBindings (in the api group) runs BEFORE auth:sanctum +
+     * the tenant middleware, so at binding time the tenant is not bound
+     * yet, TenantContext::mode() is 'none', and the tenant scope fails
+     * closed (whereRaw '1 = 0') — every bound structure 404s with
+     * "No query results for model" even though the row exists and the
+     * list returns it (26 Nov 2026). Resolving here, inside the method,
+     * runs after the tenant is bound, so the scope matches the current
+     * tenant; a foreign tenant's structure still 404s (BRD §2.4: 404, never 403).
+     */
+    private function findStructure(int $structureId): PayrollSalaryStructure
+    {
+        return PayrollSalaryStructure::findOrFail($structureId);
+    }
+
     /** GET /payroll/salary-structures?employeeId= — versions (envelope E). */
     public function index(Request $request)
     {
@@ -65,8 +84,10 @@ final class PayrollStructureController extends Controller
      * version from the given one and close the old version. The new
      * version must start after the old version's effective_from.
      */
-    public function update(Request $request, PayrollSalaryStructure $structure)
+    public function update(Request $request, int $structure)
     {
+        $structure = $this->findStructure($structure);
+
         if (! $this->can('payroll.salary.manage')) {
             return $this->forbidden();
         }

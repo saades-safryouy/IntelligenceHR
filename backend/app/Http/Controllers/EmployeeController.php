@@ -31,6 +31,24 @@ class EmployeeController extends Controller
         'emergency_contact_relationship', 'created_at', 'updated_at',
     ];
 
+    /**
+     * Resolve an employee id to the model AFTER the tenant middleware has run.
+     *
+     * NOTE — do NOT use implicit route-model binding in this controller.
+     * SubstituteBindings (in the api group) runs BEFORE auth:sanctum +
+     * the tenant middleware, so at binding time the tenant is not bound
+     * yet, TenantContext::mode() is 'none', and the tenant scope fails
+     * closed (whereRaw '1 = 0') — every bound employee 404s with
+     * "No query results for model" even though the row exists and the
+     * list returns it (26 Nov 2026). Resolving here, inside the method,
+     * runs after the tenant is bound, so the scope matches the current
+     * tenant; a foreign tenant's employee still 404s (BRD §2.4: 404, never 403).
+     */
+    private function findEmployee(int $employeeId): Employee
+    {
+        return Employee::findOrFail($employeeId);
+    }
+
     public function index(Request $request)
     {
         $page = max(1, (int) $request->query('page', 1));
@@ -90,8 +108,10 @@ class EmployeeController extends Controller
         ));
     }
 
-    public function show(Employee $employee)
+    public function show(int $employee)
     {
+        $employee = $this->findEmployee($employee);
+
         if (! $this->can('people.employee.view.all')) {
             $visible = $this->scopeEmployees(Employee::query())->pluck('id')->all();
             if (! in_array($employee->id, $visible, true)) {
@@ -116,8 +136,10 @@ class EmployeeController extends Controller
         return response()->json(['data' => ApiPresenter::employee($employee)], 201);
     }
 
-    public function update(Request $request, Employee $employee)
+    public function update(Request $request, int $employee)
     {
+        $employee = $this->findEmployee($employee);
+
         $isSelf = $this->myEmployee()?->id === $employee->id;
         if (! $this->can('people.employee.update') && ! ($isSelf && $this->can('people.employee.self.update'))) {
             return $this->forbidden();
@@ -130,8 +152,10 @@ class EmployeeController extends Controller
         return response()->json(['data' => ApiPresenter::employee($employee)]);
     }
 
-    public function destroy(Employee $employee)
+    public function destroy(int $employee)
     {
+        $employee = $this->findEmployee($employee);
+
         if (! $this->can('people.employee.update')) {
             return $this->forbidden();
         }
@@ -184,8 +208,10 @@ class EmployeeController extends Controller
     }
 
     /** PUT /employees/{employee}/reporting-relationships */
-    public function reportingRelationships(Request $request, Employee $employee)
+    public function reportingRelationships(Request $request, int $employee)
     {
+        $employee = $this->findEmployee($employee);
+
         if (! $this->can('people.reporting.update')) {
             return $this->forbidden();
         }
